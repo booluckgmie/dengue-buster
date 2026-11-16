@@ -67,7 +67,8 @@ district share              = (1 - w) x population x density^gamma x local weath
   recent cases*, with anomalies measured against the last 10 years so the warming trend is not read as
   a dengue signal. Bounded to 0.7-1.4.
 - **gamma** is the cross-state slope of log incidence on log density, bounded to 0-0.5.
-- **w** grows with the fraction of a state's outbreak localities that could be geocoded (max 0.6).
+- **w** = 0.6 x fraction of the state's outbreak localities that could be geocoded x n / (n + 20), so a
+  handful of points cannot dominate a state's allocation.
 - The interval and "chance of reaching High" come from a negative-binomial distribution with the
   dispersion estimated in the backtest.
 - Tiers: Low < 3, Moderate 3-8, High 8-16, Very high >= 16 expected cases per 100,000 in 14 days.

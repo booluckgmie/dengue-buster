@@ -120,7 +120,9 @@ def district_outlook(dist, levels, season, gamma, clim_mult, outbreaks, alpha):
         s_struct = g.struct / g.struct.sum()
         w = 0.0
         if r in cov.index and g.outbreaks.sum() > 0:
-            w = 0.6 * float(cov.loc[r, "mean"])            # trust the outbreak map in proportion to how much of it we could locate
+            n = float(g.outbreaks.sum())
+            # trust the outbreak map in proportion to how much of it we could locate, and less when it is a handful of points
+            w = 0.6 * float(cov.loc[r, "mean"]) * n / (n + 20)
         s_ob = g.outbreaks / g.outbreaks.sum() if g.outbreaks.sum() else 0
         share = (1 - w) * s_struct + w * s_ob
         reg_clim = float((g.clim * g.population).sum() / g.population.sum())
