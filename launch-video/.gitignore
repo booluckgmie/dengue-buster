@@ -1,0 +1,15 @@
+# Large or regenerable build output stays out of git; the scripts that make it are committed.
+out/
+voices/
+work/frames/
+work/frames_live/
+work/frames_test/
+work/cs/
+work/test/
+work/seg_*.mp4
+work/video_silent.mp4
+work/live_list.txt
+work/*.wav
+work/flow_error_*.png
+work/sc_*.jpg
+work/*.log

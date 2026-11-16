@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>scenes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root { --bg: #f2f5f5; --surface: #fff; --surface-2: #e9efef; --ink: #0d1b1e; --ink-2: #44575b; --muted: #74868a; --line: #d9e2e2; --accent: #0b6e72; --accent-ink: #fff;
+  --t0: #f6dbe2; --t1: #e99cb1; --t2: #cf4f77; --t3: #8a1543; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --font-d: "Sora", "Inter", system-ui, sans-serif; --font-b: "Inter", system-ui, sans-serif; --font-m: "JetBrains Mono", monospace; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #000; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--font-b); color: var(--ink); }
+#cv { position: absolute; inset: 0; display: none; }
+#layer { position: absolute; inset: 0; }
+.hero { position: absolute; inset: 0; background: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--t2) 20%, var(--surface)) 0%, transparent 55%), linear-gradient(135deg, color-mix(in srgb, var(--accent) 18%, var(--surface)), var(--surface)); }
+.drop { position: absolute; border-radius: 50%; background: var(--accent); opacity: .10; }
+.abs { position: absolute; }
+#cap { position: absolute; left: 0; right: 0; bottom: 64px; display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: 0; pointer-events: none; }
+#cap .box { background: rgba(13, 27, 30, .82); border-radius: 18px; padding: 16px 34px 18px; max-width: 1560px; text-align: center; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+#cap .en { font: 600 40px/1.25 var(--font-b); color: #fff; }
+#cap .ms { font: 500 31px/1.3 var(--font-b); color: #bfe6e3; margin-top: 4px; }
+.logo { position: absolute; }
+.mono { font-family: var(--font-m); }
+</style></head>
+<body>
+<div id="stage"><canvas id="cv" width="1920" height="1080"></canvas><div id="layer"></div>
+  <div id="cap"><div class="box"><div class="en"></div><div class="ms"></div></div></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="../../web/data/bundle.js"></script>
+<script>
+const W = 1920, H = 1080, layer = document.getElementById("layer"), cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x)), lerp = (a, b, k) => a + (b - a) * k;
+const prog = (t, a, d) => clamp((t - a) / d), eo = (k) => 1 - Math.pow(1 - k, 3), ei = (k) => k * k, eio = (k) => (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+const eb = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const DROP = "M13 5.5c3 4 4.6 6.3 4.6 8.6a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-4.6 4.6-8.6z";
+const logoSvg = (px) => `<svg viewBox="0 0 26 26" width="${px}" height="${px}"><circle cx="13" cy="13" r="12" fill="#0b6e72"/><path d="${DROP}" fill="#fff"/></svg>`;
+const el = (html) => { const d = document.createElement("div"); d.innerHTML = html.trim(); return d.firstChild; };
+let CAPS = [], OFFSET = 0, cur = 0, S = {};
+
+function bgDrops(n, seed, xmin = 0) {   // slow drifting circles, as in the product's hero
+  const r = rng(seed), list = [];
+  for (let i = 0; i < n; i++) { const s = 60 + r() * 220, d = el(`<div class="drop" style="width:${s}px;height:${s}px;left:${xmin + r() * (1700 - xmin)}px;top:${r() * 900}px;${i % 3 === 1 ? "background:var(--t2);opacity:.14" : ""}"></div>`); layer.appendChild(d); list.push({ d, ph: r() * 6.28, sp: .5 + r() * .6, x: parseFloat(d.style.left), y: parseFloat(d.style.top) }); }
+  return (t) => list.forEach((o) => { o.d.style.transform = `translateY(${Math.sin(t * o.sp * .7 + o.ph) * -24}px) scale(${1 + Math.sin(t * o.sp * .7 + o.ph) * .05})`; });
+}
+
+/* ---------------- scene 1: rain and a drip ---------------- */
+function scene1() {
+  cv.style.display = "block";
+  const r = rng(7), drops = Array.from({ length: 170 }, () => ({ x: r() * 2300 - 200, y0: r() * 1300, v: 900 + r() * 700, l: 40 + r() * 70, a: .18 + r() * .4, w: 1.2 + r() * 1.8 }));
+  const head = el(`<div class="abs" style="left:110px;top:150px;font-family:var(--font-d);color:#e8f0f0"><div style="font:600 54px/1.1 var(--font-d);opacity:.72">After the rain,</div><div style="font:700 124px/1.02 var(--font-d);letter-spacing:-.02em">standing water.</div></div>`);
+  layer.appendChild(head); const dropPath = new Path2D(DROP);
+  return (t) => {
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.clearRect(0, 0, W, H);
+    const g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, "#0d1b1e"); g.addColorStop(1, "#0b6e72"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const z = 1 + .11 * eio(clamp(t / 6.5)); ctx.setTransform(z, 0, 0, z, (1 - z) * 1330, (1 - z) * 770);
+    ctx.strokeStyle = "#9fd8d5"; ctx.lineCap = "round";
+    for (const d of drops) { const y = ((d.y0 + d.v * t) % (H + 240)) - 120, x = d.x - y * .18; ctx.globalAlpha = d.a; ctx.lineWidth = d.w; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - d.l * .18, y + d.l); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    // flower-pot saucer with a film of water
+    ctx.fillStyle = "#17272b"; ctx.strokeStyle = "rgba(88,201,197,.65)"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(1330, 770, 470, 74, 0, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "rgba(88,201,197,.34)"; ctx.beginPath(); ctx.ellipse(1330, 758, 400, 54, 0, 0, 7); ctx.fill();
+    // ripples
+    for (let i = 0; i < 3; i++) { const p = prog(t, 3.5 + i * .42, 2.1); if (p > 0 && p < 1) { ctx.strokeStyle = `rgba(232,240,240,${.85 * (1 - p)})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(1330, 758, lerp(20, 390, eo(p)), lerp(4, 56, eo(p)), 0, 0, 7); ctx.stroke(); } }
+    // the droplet
+    const pd = prog(t, 2.2, 1.3);
+    if (pd > 0 && pd < 1) { const y = lerp(-80, 732, ei(pd)), s = 5; ctx.setTransform(z * s, 0, 0, z * s, (1 - z) * 1330 + z * (1330 - 13 * s), (1 - z) * 770 + z * (y - 14 * s)); ctx.fillStyle = "#58c9c5"; ctx.fill(dropPath); }
+    head.style.opacity = eo(prog(t, .8, .9)); head.style.transform = `translateY(${(1 - eo(prog(t, .8, .9))) * 24}px)`;
+  };
+}
+
+/* ---------------- scene 2: three people, three questions ---------------- */
+function scene2() {
+  layer.appendChild(el('<div class="hero"></div>')); const drift = bgDrops(4, 3);
+  const P = [
+    { ini: "A", who: "Aisyah, parent", q: "Is my family at risk?", icon: '<rect x="34" y="18" width="52" height="84" rx="10" fill="none" stroke="#fff" stroke-width="6"/><circle cx="60" cy="88" r="4" fill="#fff"/>' },
+    { ini: "R", who: "Encik Razak, district health officer", q: "Where do our teams go first?", icon: '<rect x="30" y="24" width="60" height="78" rx="8" fill="none" stroke="#fff" stroke-width="6"/><path d="M44 52h32M44 68h32M44 84h20" stroke="#fff" stroke-width="6" stroke-linecap="round"/><rect x="46" y="14" width="28" height="16" rx="5" fill="#0b6e72" stroke="#fff" stroke-width="6"/>' },
+    { ini: "M", who: "Mei Ling, analyst", q: "Can we trust this forecast?", icon: '<rect x="26" y="30" width="68" height="46" rx="6" fill="none" stroke="#fff" stroke-width="6"/><path d="M16 88h88" stroke="#fff" stroke-width="7" stroke-linecap="round"/>' },
+  ];
+  const cards = P.map((p, i) => { const c = el(`<div class="abs" style="left:${130 + i * 580}px;top:130px;width:540px;min-height:600px;background:#fff;border:1px solid #d9e2e2;border-radius:32px;padding:42px;box-shadow:0 1px 2px rgba(13,27,30,.06),0 24px 60px -30px rgba(13,27,30,.35);display:flex;flex-direction:column;gap:26px">
+      <div style="width:150px;height:150px;border-radius:50%;background:#0b6e72"><svg viewBox="0 0 120 120" width="150" height="150">${p.icon}</svg></div>
+      <div style="font:600 29px/1.3 var(--font-b);color:var(--ink-2);min-height:76px">${p.who}</div>
+      <div class="q" style="background:#e9efef;border-radius:22px;padding:28px 30px;font:600 46px/1.22 var(--font-d);color:var(--ink);min-height:200px"></div></div>`); layer.appendChild(c); return c; });
+  return (t) => {
+    drift(t);
+    cards.forEach((c, i) => {
+      const a = .25 + i * 1.5, k = eo(prog(t, a, .55)), out = eio(prog(t, 6.2, .9));
+      c.style.opacity = k * (1 - out); c.style.transform = `translate(${-out * 220}px,${(1 - k) * 46}px)`;
+      const q = P[i].q, n = Math.floor(q.length * prog(t, a + .45, 1.0)); c.querySelector(".q").textContent = q.slice(0, n) + (n < q.length && n > 0 ? "|" : "");
+    });
+  };
+}
+
+/* ---------------- scene 3: title, with the real district map assembling ---------------- */
+function scene3() {
+  layer.appendChild(el('<div class="hero"></div>')); const drift = bgDrops(4, 11, 900);
+  const logo = el(`<div class="logo" style="left:150px;top:300px">${logoSvg(210)}</div>`), ring = el('<div class="abs" style="left:255px;top:405px;width:0;height:0;border-radius:50%;border:4px solid #0b6e72;opacity:0;transform:translate(-50%,-50%)"></div>');
+  const title = el('<div class="abs" style="left:150px;top:540px;font:700 104px/1 var(--font-d);letter-spacing:-.02em">Dengue Buster</div>');
+  const tag = el('<div class="abs" style="left:150px;top:690px;width:700px;font:500 44px/1.3 var(--font-b);color:#44575b">A two-week dengue outlook for every district in Malaysia.</div>');
+  const sw = el(`<div class="abs" style="left:150px;top:850px;display:flex;gap:10px">${["--t0", "--t1", "--t2", "--t3"].map((v) => `<i style="width:82px;height:34px;border-radius:10px;background:var(${v});display:block"></i>`).join("")}</div>`);
+  [ring, logo, title, tag, sw].forEach((n) => layer.appendChild(n));
+  const SHIFT = 3.6, sh = (x) => (x > 106.5 ? x - SHIFT : x), mv = (c) => (typeof c[0] === "number" ? [sh(c[0]), c[1]] : c.map(mv));
+  const D = window.DENGUE, byId = new Map(D.districts.map((d) => [d.id, d]));
+  const geo = { type: "FeatureCollection", features: D.geo.features.map((f) => ({ type: "Feature", id: f.id, geometry: { type: f.geometry.type, coordinates: mv(f.geometry.coordinates) } })) };
+  geo.features.forEach((f) => { const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates; polys.forEach((p) => p.forEach((ringc, i) => { const big = d3.geoArea({ type: "Polygon", coordinates: [ringc] }) > 2 * Math.PI; if (i === 0 ? big : !big) ringc.reverse(); })); });
+  const pr = d3.geoMercator().fitExtent([[0, 0], [900, 520]], geo), pa = d3.geoPath(pr), tier = ["Low", "Moderate", "High", "Very high"];
+  const order = geo.features.map((f) => ({ f, lon: byId.get(f.id).lon })).sort((a, b) => a.lon - b.lon);
+  const svg = el(`<svg class="abs" style="left:960px;top:230px;overflow:visible" width="900" height="520" viewBox="0 0 900 520"></svg>`); layer.appendChild(svg);
+  const NS = "http://www.w3.org/2000/svg", css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const paths = order.map((o, i) => { const p = document.createElementNS(NS, "path"); p.setAttribute("d", pa(o.f)); p.setAttribute("fill", css("--t" + tier.indexOf(byId.get(o.f.id).tier))); p.setAttribute("stroke", "#fff"); p.setAttribute("stroke-width", ".7"); p.style.transformBox = "fill-box"; p.style.transformOrigin = "center"; svg.appendChild(p); return p; });
+  const dots = D.outbreak_pts.map((q) => { const [x, y] = pr([sh(q[0]), q[1]]); const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 3.4); c.setAttribute("fill", "#0d1b1e"); c.setAttribute("stroke", "#fff"); c.setAttribute("stroke-width", ".8"); svg.appendChild(c); return c; });
+  return (t) => {
+    drift(t);
+    const kr = prog(t, 0, .9); ring.style.opacity = kr < 1 ? .9 * (1 - kr) + .1 : 0; ring.style.width = ring.style.height = lerp(10, 520, eo(kr)) + "px";
+    const kl = eb(prog(t, .15, .7)); logo.style.transform = `scale(${.6 + .4 * kl})`; logo.style.opacity = prog(t, .15, .3); logo.style.transformOrigin = "105px 105px";
+    [[title, .6], [tag, 1.1], [sw, 1.7]].forEach(([n, a]) => { const k = eo(prog(t, a, .6)); n.style.opacity = k; n.style.transform = `translateY(${(1 - k) * 26}px)`; });
+    paths.forEach((p, i) => { const k = eb(prog(t, .5 + i * (2.3 / paths.length), .5)); p.style.opacity = clamp(k * 1.4); p.style.transform = `scale(${.75 + .25 * k})`; });
+    dots.forEach((c, i) => { c.style.opacity = prog(t, 3.0 + (i % 20) * .03, .4); });
+  };
+}
+
+/* ---------------- scene 11: built on open data ---------------- */
+function scene11() {
+  layer.appendChild(el('<div class="abs" style="inset:0;background:linear-gradient(135deg,#e9efef,#f2f5f5)"></div>')); const drift = bgDrops(4, 5);
+  const head = el('<div class="abs" style="left:130px;top:90px;font:700 96px/1.05 var(--font-d);letter-spacing:-.02em">Built on open data</div>'); layer.appendChild(head);
+  const N = ["iDengue (MOH / MYSA)", "OpenDengue", "NASA POWER", "Open-Meteo", "DOSM", "OpenStreetMap contributors"];
+  const row = el('<div class="abs" style="left:130px;top:290px;width:1660px;display:flex;flex-wrap:wrap;gap:30px"></div>'); layer.appendChild(row);
+  const chips = N.map((n, i) => { const c = el(`<div style="background:#fff;border:1px solid #d9e2e2;border-radius:999px;padding:26px 44px;font:600 40px/1 var(--font-b);white-space:nowrap;display:flex;align-items:center;gap:20px;box-shadow:0 1px 2px rgba(13,27,30,.06),0 16px 40px -24px rgba(13,27,30,.35)"><i style="width:18px;height:18px;border-radius:50%;background:#0b6e72;display:block"></i>${n}</div>`); row.appendChild(c); return c; });
+  const stamp = el('<div class="abs" style="left:130px;top:580px;border-left:10px solid #eb6834;padding-left:34px;font:600 58px/1.2 var(--font-d);max-width:1300px">District figures are estimates.<br><span style="font-weight:500;color:#44575b">We show you the range.</span></div>'); layer.appendChild(stamp);
+  return (t) => {
+    drift(t);
+    const kh = eo(prog(t, .1, .6)); head.style.opacity = kh; head.style.transform = `translateY(${(1 - kh) * 24}px)`;
+    chips.forEach((c, i) => { const k = eo(prog(t, .5 + i * .28, .55)); c.style.opacity = k; c.style.transform = `translateY(${(1 - k) * 30}px)`; });
+    const ks = eo(prog(t, 3.0, .7)); stamp.style.opacity = ks; stamp.style.transform = `translateX(${(1 - ks) * -40}px)`;
+  };
+}
+
+/* ---------------- scene 12: call to action ---------------- */
+function scene12() {
+  layer.appendChild(el('<div class="hero"></div>')); const drift = bgDrops(5, 9);
+  const logo = el(`<div class="logo" style="left:880px;top:70px">${logoSvg(160)}</div>`);
+  const title = el('<div class="abs" style="left:0;right:0;top:250px;text-align:center;font:700 124px/1 var(--font-d);letter-spacing:-.02em">Dengue Buster</div>');
+  const line = el('<div class="abs" style="left:0;right:0;top:395px;text-align:center;font:500 46px/1.3 var(--font-b);color:#44575b">Check your surroundings. Clear standing water.<br>Look out for each other.</div>');
+  const btn = el('<div class="abs" style="left:560px;top:560px;width:800px;text-align:center;background:#0b6e72;color:#fff;font:600 62px/1 var(--font-b);padding:38px 0;border-radius:26px;box-shadow:0 24px 50px -24px rgba(11,110,114,.7)">Check your district</div>');
+  const url = el('<div class="abs mono" style="left:0;right:0;top:745px;text-align:center;font:500 46px/1 var(--font-m);color:#0d1b1e">dengue-buster-phi.vercel.app</div>');
+  const credit = el('<div class="abs" style="left:0;right:0;bottom:18px;text-align:center;font:400 20px/1.3 var(--font-b);color:#74868a">Open data: iDengue (MOH / MYSA), OpenDengue, NASA POWER, Open-Meteo, DOSM, NOAA. Map data &copy; OpenStreetMap contributors.</div>');
+  [logo, title, line, btn, url, credit].forEach((n) => layer.appendChild(n));
+  return (t) => {
+    drift(t);
+    [[logo, .1], [title, .4], [line, .9], [btn, 1.5], [url, 2.0], [credit, 2.4]].forEach(([n, a], i) => { const k = eo(prog(t, a, .6)); n.style.opacity = k; if (n !== logo) n.style.transform = `translateY(${(1 - k) * 26}px)`; });
+    const pulse = t > 3.2 ? 1 + .03 * Math.sin(clamp((t - 3.2) / 1.2) * Math.PI) : 1; btn.style.transform = `translateY(${(1 - eo(prog(t, 1.5, .6))) * 26}px) scale(${pulse})`;
+  };
+}
+
+const SCENES = { 1: scene1, 2: scene2, 3: scene3, 11: scene11, 12: scene12 };
+window.load = async (n, captions, offset) => {
+  cur = n; CAPS = captions.filter((c) => c.scene === n); OFFSET = offset; layer.innerHTML = ""; cv.style.display = "none";
+  S.draw = SCENES[n](); await document.fonts.ready; await new Promise((r) => setTimeout(r, 400));
+};
+window.seek = (t) => {
+  S.draw(t);
+  const g = t + OFFSET, c = CAPS.find((x) => g >= x.a && g <= x.b), cap = document.getElementById("cap");
+  if (!c || (cur === 12 && false)) { cap.style.opacity = 0; return; }
+  cap.querySelector(".en").textContent = cur === 12 ? "" : c.en; cap.querySelector(".en").style.display = cur === 12 ? "none" : "block"; cap.querySelector(".ms").textContent = c.ms;
+  cap.style.opacity = Math.min(1, (g - c.a) / .25, (c.b - g) / .25);
+};
+</script></body></html>
