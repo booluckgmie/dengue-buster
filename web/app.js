@@ -49,6 +49,39 @@
     polys.forEach((p) => p.forEach((ring, i) => { const big = d3.geoArea({ type: "Polygon", coordinates: [ring] }) > 2 * Math.PI; if (i === 0 ? big : !big) ring.reverse(); }));
   });
 
+  // Drawing geometry: East Malaysia is moved SHIFT degrees west so both halves of the country fill the same frame
+  // (like the Alaska inset on a US map). Lookups such as "which district is this point in" always use real coordinates.
+  const SHIFT = 3.6, sh = (lon) => (lon > 106.5 ? lon - SHIFT : lon);
+  const shiftCoords = (c) => (typeof c[0] === "number" ? [sh(c[0]), c[1]] : c.map(shiftCoords));
+  const GEO2 = { type: "FeatureCollection", features: D.geo.features.map((f) => ({ type: "Feature", id: f.id, properties: f.properties, geometry: { type: f.geometry.type, coordinates: shiftCoords(f.geometry.coordinates) } })) };
+  function mapBase(el, w, h, coll) {
+    const s = d3.select(el); s.selectAll("*").remove(); s.attr("viewBox", `0 0 ${w} ${h}`);
+    const pr = d3.geoMercator().fitExtent([[6, 6], [w - 6, h - 6]], coll || GEO2);
+    return { s, pr, pa: d3.geoPath(pr), P: (lo, la) => pr([sh(lo), la]) };
+  }
+
+  /* ================= theme ================= */
+  const root = document.documentElement;
+  const sysDark = () => matchMedia("(prefers-color-scheme: dark)").matches;
+  const effTheme = () => root.dataset.theme || (sysDark() ? "dark" : "light");
+  try { const s = localStorage.getItem("db-theme"); if (s === "light" || s === "dark") root.dataset.theme = s; } catch (e) { /* storage may be blocked */ }
+  const ICONS = {
+    moon: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    sun: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+  };
+  function themeButton() {
+    const dark = effTheme() === "dark", b = $("#theme");
+    b.innerHTML = dark ? ICONS.sun : ICONS.moon;
+    const label = t(dark ? "theme.tolight" : "theme.todark");
+    b.setAttribute("aria-label", label); b.title = label;
+  }
+  $("#theme").onclick = () => {
+    const next = effTheme() === "dark" ? "light" : "dark";
+    root.dataset.theme = next;
+    try { localStorage.setItem("db-theme", next); } catch (e) { /* optional */ }
+    themeButton();
+  };
+
   /* ================= router ================= */
   const TABS = ["today", "map", "inspect", "evidence", "about"];
   function go(tab, o = {}) {
@@ -56,6 +89,7 @@
     $$(".tab").forEach((s) => (s.hidden = s.id !== "tab-" + tab));
     $$("#tabs button").forEach((b) => (b.getAttribute("data-tab") === tab ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current")));
     if (tab === "map") initMap();
+    if (tab === "evidence") renderEvidence();       // chart widths follow the container, which is only known once visible
     try { if (location.hash.slice(1) !== tab) history.replaceState(null, "", "#" + tab); } catch (e) { /* hash routing is optional */ }
     if (o.scroll !== false) window.scrollTo({ top: 0, behavior: calm ? "auto" : "smooth" });
   }
@@ -84,6 +118,20 @@
     $("#h1").innerHTML = t("hero.h1", esc(top3[0]), esc(top3[1]), esc(top3[2]));
     $("#hsub").textContent = t("hero.sub", fmt(N.exp14), nHigh, D.districts.length, f1(N.pop_high / 1e6));
     $("#dlist").innerHTML = ranked.slice().sort((a, b) => a.district.localeCompare(b.district)).map((d) => `<option value="${esc(clean(d.district))} (${esc(clean(d.state))})"></option>`).join("");
+  }
+  // Hero map: every district coloured by tier, outbreak localities on top. Click opens the district on the main map.
+  function renderHeroMap() {
+    const { s, pa, P: P2 } = mapBase($("#hero-map"), 640, 330);
+    s.append("g").selectAll("path").data(GEO2.features).join("path").attr("d", pa).attr("class", "hm").style("fill", (f) => tierColor(byId.get(f.id).tier))
+      .on("mousemove", (ev, f) => { const d = byId.get(f.id); showTip(`<b>${esc(d.district)}</b> <span class="k">${esc(d.state)}</span><br>${t("tip.d", tierName(d.tier), f1(d.exp))}`, ev); })
+      .on("mouseleave", hideTip).on("click", (ev, f) => openDistrict(f.id));
+    s.append("g").selectAll("circle").data(D.outbreak_pts).join("circle").attr("class", "mini-ob").attr("r", 1.9).attr("cx", (p) => P2(p[0], p[1])[0]).attr("cy", (p) => P2(p[0], p[1])[1]);
+    $("#hero-legend").innerHTML = TIERS.map((x) => `<span><i style="background:${tierColor(x)}"></i>${tierName(x)}</span>`).join("") + `<span><b class="mini-dot"></b>${t("leg.ob")}</span>`;
+    $("#hero-cap").textContent = t("hero.map.cap") + " " + t("map.inset");
+  }
+  function renderTierDist() {
+    const rows = TIERS.slice().reverse().map((x) => { const ds = D.districts.filter((d) => d.tier === x); return { x, n: ds.length, pop: d3.sum(ds, (d) => d.pop) }; }), tot = d3.sum(rows, (r) => r.pop) || 1;
+    $("#tier-dist").innerHTML = `<div class="card-h"><h3>${t("dist.h")}</h3></div><div class="rows">` + rows.map((r) => `<div class="row tier-row"><span class="nm">${pill(r.x)}</span><span class="trk"><span class="gbar" style="--w:${(r.pop / tot) * 100}%;--c:${tierColor(r.x)}"></span></span><span class="v">${t("dist.row", `<b>${r.n}</b>`, f1(r.pop / 1e6))}</span></div>`).join("") + `</div>`;
   }
 
   function districtAt(lon, lat) {
@@ -241,7 +289,9 @@
     { id: "edu", type: "seq", v: (d) => d.osm_school + d.osm_kinder, pow: 0.5, u: () => t("L.constr.u") },
   ];
   const lname = (l) => t(`L.${l.id}.n`), ldesc = (l) => t(`L.${l.id}.d`);
-  let layer = LAYERS[0], mapReady = false, colorFn = () => "#888", svg, proj, path, gS, gO, gH, gP, pin = null, paths, zoom, k = 1, W = 1000, H = 465;
+  let layer = LAYERS[0], mapReady = false, colorFn = () => "#888", svg, proj, path, gA, gS, gO, gH, gP, pin = null, paths, zoom, k = 1, W = 1000, H = 465;
+  const P = (lon, lat) => proj([sh(lon), lat]);
+  const siteOn = { school: true, kindergarten: true, construction: true };
 
   function renderLayerSelect() {
     const sel = $("#layer");
@@ -257,19 +307,23 @@
     if (!mapReady) return;
     const tcol = TIERS.map((_, i) => css("--t" + i)), lg = $("#legend");
     const neg = css("--div-neg"), mid = css("--div-mid"), pos = css("--div-pos");
+    let note = "";
     $("#layer-desc").textContent = ldesc(layer);
     if (layer.type === "tier") {
       colorFn = (d) => tcol[TIERS.indexOf(d.tier)];
       const th = D.meta.tiers.map((x) => x[0]);
-      lg.innerHTML = TIERS.map((x, i) => `<span><span class="sw" style="background:${tcol[i]}"></span>${tierName(x)} <span class="muted">${i < 3 ? th[i] + " - " + th[i + 1] : th[i] + "+"}</span></span>`).join("") + `<span class="note">${t("leg.per")}</span>`;
+      lg.innerHTML = TIERS.map((x, i) => `<span><span class="sw" style="background:${tcol[i]}"></span>${tierName(x)} <span class="muted">${i < 3 ? th[i] + " - " + th[i + 1] : th[i] + "+"}</span></span>`).join("");
+      note = t("leg.per");
     } else if (layer.type === "lisa") {
       const c = { HH: pos, LL: neg, HL: d3.interpolateRgb(mid, pos)(0.45), LH: d3.interpolateRgb(mid, neg)(0.45), ns: css("--nodata") };
       colorFn = (d) => c[d.lisa];
-      lg.innerHTML = Object.keys(c).map((k2) => `<span><span class="sw" style="background:${c[k2]}"></span>${t("lisa." + k2)}</span>`).join("") + `<span class="note">${t("leg.p")}</span>`;
+      lg.innerHTML = Object.keys(c).map((k2) => `<span><span class="sw" style="background:${c[k2]}"></span>${t("lisa." + k2)}</span>`).join("");
+      note = t("leg.p");
     } else if (layer.type === "div") {
       const s = d3.scaleDiverging([layer.dom[0], layer.dom[1], layer.dom[2]], (x) => x < 0.5 ? d3.interpolateRgb(neg, mid)(x * 2) : d3.interpolateRgb(mid, pos)((x - 0.5) * 2)).clamp(true);
       colorFn = (d) => s(layer.v(d));
-      lg.innerHTML = `<span>${layer.dom[0]}${layer.u()}<span class="ramp" style="background:linear-gradient(90deg,${neg},${mid},${pos})"></span>${layer.dom[2]}${layer.u()}</span><span class="note">${layer.id === "gi" ? t("leg.gi") : t("leg.clim")}</span>`;
+      lg.innerHTML = `<span>${layer.dom[0]}${layer.u()}<span class="ramp" style="background:linear-gradient(90deg,${neg},${mid},${pos})"></span>${layer.dom[2]}${layer.u()}</span>`;
+      note = layer.id === "gi" ? t("leg.gi") : t("leg.clim");
     } else {
       const vals = D.districts.map(layer.v).filter((v) => v != null && isFinite(v)), lo = d3.min(vals), hi = d3.max(vals);
       const sc = layer.log ? d3.scaleLog().domain([Math.max(lo, 1), hi]).range([0, 1]) : d3.scalePow().exponent(layer.pow || 1).domain([lo, hi]).range([0, 1]);
@@ -277,51 +331,83 @@
       colorFn = (d) => { const v = layer.v(d); return v == null ? css("--nodata") : ramp(Math.max(0, Math.min(1, sc(layer.log ? Math.max(v, 1) : v)))); };
       lg.innerHTML = `<span>${fmt(Math.round(lo))}<span class="ramp" style="background:linear-gradient(90deg,${ramp(0)},${ramp(1)})"></span>${fmt(Math.round(hi))}${layer.u()}</span>`;
     }
-    lg.innerHTML += `<span><span class="mk" style="background:var(--ink)"></span>${t("leg.ob")}</span><span><span class="mk ring"></span>${t("leg.hs")}</span>`;
+    lg.innerHTML += `<span class="sep"></span><span><span class="mk" style="background:var(--ink)"></span>${t("leg.ob")}</span><span><span class="mk ring"></span>${t("leg.hs")}</span>` +
+      KINDS.map((k2) => `<span><span class="mk" style="background:var(${KIND[k2]})"></span>${kindName(k2)}</span>`).join("") +
+      (pin ? `<span><span class="mk pinmk"></span>${t("leg.pin")}</span>` : "") +
+      `<span class="note">${note ? note + ". " : ""}<span id="site-hint"></span> ${t("map.inset")}</span>`;
     paths.attr("fill", (f) => colorFn(byId.get(f.id)));
+    updateSiteVis();
   }
-  function sizePts() { gP && gP.selectAll("circle").attr("r", 6 / k); gO.selectAll("circle").attr("r", 2.6 / k); gH.selectAll("circle").attr("r", 5 / k); gS.selectAll("circle").attr("r", 2.4 / Math.sqrt(k)); }
+  // Marker sizes are divided by the zoom factor so they keep a steady on-screen size.
+  // Radii AND stroke widths are set here from the zoom factor, not with CSS `vector-effect: non-scaling-stroke`, which some
+  // browsers ignore for dashed strokes inside a zoomed group (a 2px ring then becomes 80px thick at full zoom).
+  function sizePts() {
+    const rs = Math.min(5, 2 + 0.6 * Math.log2(k + 1));       // on-screen radius of a site dot, in map units
+    if (gP) {
+      gP.selectAll("circle").attr("r", 6 / k).style("stroke-width", 2.5 / k);
+      gP.selectAll("path").style("stroke-width", 2 / k).style("stroke-dasharray", `${7 / k} ${5 / k}`);
+    }
+    gO.selectAll("circle").attr("r", 3.4 / k).style("stroke-width", 0.8 / k);
+    gH.selectAll("circle").attr("r", 6.5 / k).style("stroke-width", 1.6 / k);
+    gA.selectAll("circle").attr("r", rs / k).style("stroke-width", 0.5 / k);
+    gS.selectAll("circle").attr("r", (rs * 1.15) / k).style("stroke-width", 0.6 / k);
+  }
+  // The ~9,500 school, kindergarten and construction dots only appear once zoomed in (k >= 3), or when their toggle is on.
+  function updateSiteVis() {
+    if (!mapReady) return;
+    const show = k >= 3;
+    gA.attr("display", show ? null : "none");
+    gA.selectAll("g.sg").attr("display", function () { return siteOn[this.dataset.kind] ? null : "none"; });
+    const h = $("#site-hint"); if (h) h.textContent = !show && KINDS.some((x) => siteOn[x]) ? t("leg.zoom") : "";
+  }
   function initMap() {
-    if (mapReady) return; mapReady = true;
+    if (mapReady) return; mapReady = true; k = 1;
     svg = d3.select("#map");
     const box = svg.node().getBoundingClientRect();
-    H = Math.round(W / ((box.width || 1000) / (box.height || 465)));
+    W = 1000; H = Math.max(300, Math.round(W / ((box.width || 1000) / (box.height || 465))));
     svg.attr("viewBox", `0 0 ${W} ${H}`);
-    proj = d3.geoMercator().fitExtent([[12, 12], [W - 12, H - 12]], D.geo); path = d3.geoPath(proj);
-    const g = svg.append("g"), gD = g.append("g"); gS = g.append("g"); gO = g.append("g"); gH = g.append("g"); gP = g.append("g");
-    zoom = d3.zoom().scaleExtent([1, 60]).on("zoom", (e) => { g.attr("transform", e.transform); k = e.transform.k; sizePts(); });
+    proj = d3.geoMercator().fitExtent([[12, 12], [W - 12, H - 12]], GEO2); path = d3.geoPath(proj);
+    const g = svg.append("g"), gD = g.append("g"); gA = g.append("g"); gS = g.append("g"); gO = g.append("g"); gH = g.append("g"); gP = g.append("g");
+    zoom = d3.zoom().scaleExtent([1, 60]).on("zoom", (e) => { g.attr("transform", e.transform); k = e.transform.k; sizePts(); updateSiteVis(); });
     svg.call(zoom).on("dblclick.zoom", null);
-    paths = gD.selectAll("path").data(D.geo.features).join("path").attr("class", "d").attr("d", path).attr("tabindex", 0)
+    paths = gD.selectAll("path").data(GEO2.features).join("path").attr("class", "d").attr("d", path).attr("tabindex", 0)
       .attr("aria-label", (f) => { const d = byId.get(f.id); return `${d.district}, ${d.state}: ${tierName(d.tier)}`; })
       .on("mousemove", (ev, f) => { const d = byId.get(f.id); showTip(`<b>${esc(d.district)}</b> <span class="k">${esc(d.state)}</span><br>${t("tip.d", tierName(d.tier), f1(d.exp))}<br><span class="k">${lname(layer)}:</span> ${layerValue(d)}`, ev); })
       .on("mouseleave", hideTip).on("click", (ev, f) => select(f.id)).on("keydown", (ev, f) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); select(f.id); } });
-    gO.selectAll("circle").data(D.outbreak_pts).join("circle").attr("class", "ob").attr("cx", (p) => proj([p[0], p[1]])[0]).attr("cy", (p) => proj([p[0], p[1]])[1]);
-    gH.selectAll("circle").data(D.hotspots).join("circle").attr("class", "hs").attr("cx", (p) => proj([p[0], p[1]])[0]).attr("cy", (p) => proj([p[0], p[1]])[1]);
+    KINDS.forEach((kd) => gA.append("g").attr("class", "sg").attr("data-kind", kd).selectAll("circle").data(D.sites[kd] || []).join("circle").attr("class", "sa").style("fill", `var(${KIND[kd]})`)
+      .attr("cx", (p) => P(p[0], p[1])[0]).attr("cy", (p) => P(p[0], p[1])[1]));
+    gO.selectAll("circle").data(D.outbreak_pts).join("circle").attr("class", "ob").attr("cx", (p) => P(p[0], p[1])[0]).attr("cy", (p) => P(p[0], p[1])[1]);
+    gH.selectAll("circle").data(D.hotspots).join("circle").attr("class", "hs").attr("cx", (p) => P(p[0], p[1])[0]).attr("cy", (p) => P(p[0], p[1])[1]);
     gO.attr("display", $("#ov-ob").checked ? null : "none"); gH.attr("display", $("#ov-hs").checked ? null : "none");
-    sizePts(); recolor(); drawPin(false);
+    sizePts(); drawPin(false); recolor();
     if (selected) select(selected); else renderRank();
   }
   $("#layer").addEventListener("change", (e) => { layer = LAYERS.find((l) => l.id === e.target.value); recolor(); });
   $("#ov-ob").addEventListener("change", (e) => gO && gO.attr("display", e.target.checked ? null : "none"));
   $("#ov-hs").addEventListener("change", (e) => gH && gH.attr("display", e.target.checked ? null : "none"));
+  [["school", "#ov-school"], ["kindergarten", "#ov-kg"], ["construction", "#ov-con"]].forEach(([kd, id]) => $(id).addEventListener("change", (e) => { siteOn[kd] = e.target.checked; updateSiteVis(); }));
+  $("#clear-pin").onclick = () => { pin = null; if (gP) gP.selectAll("*").remove(); $("#clear-pin").hidden = true; recolor(); };
   function zoomTo(feats, pad, btn) {
     const b = path.bounds({ type: "FeatureCollection", features: feats }), dx = b[1][0] - b[0][0], dy = b[1][1] - b[0][1];
     const s = Math.min(40, pad / Math.max(dx / W, dy / H)), tr = d3.zoomIdentity.translate(W / 2 - s * (b[0][0] + b[1][0]) / 2, H / 2 - s * (b[0][1] + b[1][1]) / 2).scale(s);
     svg.transition().duration(calm ? 0 : 600).call(zoom.transform, tr);
     ["#z-all", "#z-pen", "#z-bor"].forEach((i) => $(i).setAttribute("aria-pressed", String(i === btn)));
   }
-  $("#z-all").onclick = () => zoomTo(D.geo.features, 0.96, "#z-all");
-  $("#z-pen").onclick = () => zoomTo(D.geo.features.filter((f) => byId.get(f.id).lon < 106), 0.9, "#z-pen");
-  $("#z-bor").onclick = () => zoomTo(D.geo.features.filter((f) => byId.get(f.id).lon >= 106), 0.9, "#z-bor");
+  $("#z-all").onclick = () => zoomTo(GEO2.features, 0.96, "#z-all");
+  $("#z-pen").onclick = () => zoomTo(GEO2.features.filter((f) => byId.get(f.id).lon < 106), 0.92, "#z-pen");
+  $("#z-bor").onclick = () => zoomTo(GEO2.features.filter((f) => byId.get(f.id).lon >= 106), 0.92, "#z-bor");
 
   function drawPin(zoomIt) {
+    $("#clear-pin").hidden = !pin;
     if (!mapReady || !pin) return;
     gP.selectAll("*").remove();
-    const c = d3.geoCircle().center([pin.lon, pin.lat]).radius(pin.km / 111.32)();
+    const c = d3.geoCircle().center([sh(pin.lon), pin.lat]).radius(pin.km / 111.32)();
     gP.append("path").datum(c).attr("class", "pinr").attr("d", path);
-    const [x, y] = proj([pin.lon, pin.lat]);
+    const [x, y] = P(pin.lon, pin.lat);
     gP.append("circle").attr("class", "pin").attr("cx", x).attr("cy", y).attr("r", 6 / k);
+    sizePts();
     if (zoomIt) zoomTo([{ type: "Feature", geometry: c, properties: {} }], 0.6, null);
+    recolor();
   }
   function select(id) {
     selected = id;
@@ -331,12 +417,12 @@
     const d = byId.get(id), idx = D.districts.indexOf(d), pts = [];
     KINDS.forEach((kd) => (D.sites[kd] || []).forEach((p) => { if (p[2] === idx) pts.push([p[0], p[1], kd]); }));
     selectedSites = pts.length;
-    gS.selectAll("circle").data(pts).join("circle").attr("class", "site").attr("fill", (p) => css(KIND[p[2]])).attr("cx", (p) => proj([p[0], p[1]])[0]).attr("cy", (p) => proj([p[0], p[1]])[1]);
-    sizePts(); zoomTo(D.geo.features.filter((f) => f.id === id), 0.55, null); renderDistrict(d, pts.length);
+    gS.selectAll("circle").data(pts).join("circle").attr("class", "site").style("fill", (p) => `var(${KIND[p[2]]})`).attr("cx", (p) => P(p[0], p[1])[0]).attr("cy", (p) => P(p[0], p[1])[1]);
+    sizePts(); zoomTo(GEO2.features.filter((f) => f.id === id), 0.55, null); renderDistrict(d, pts.length);
   }
   function renderRank() {
     $("#side").innerHTML = `<header><span class="eyebrow">${t("side.watch")}</span><h2>${t("side.top")}</h2><p class="muted">${t("side.pick")}</p></header>
-      <ol class="rank">${ranked.slice(0, 30).map((d) => `<li data-id="${d.id}" tabindex="0"><span class="muted num">${d.rank}</span><span class="nm"><b>${esc(d.district)}</b><span>${esc(d.state)}</span></span><span class="rv">${pill(d.tier)}<small>${t("side.per", f1(d.per100k))}</small></span></li>`).join("")}</ol>`;
+      <ol class="rank">${ranked.slice(0, 40).map((d) => `<li data-id="${d.id}" tabindex="0"><span class="muted num">${d.rank}</span><span class="nm"><b>${esc(d.district)}</b><span>${esc(d.state)}</span></span><span class="rv">${pill(d.tier)}<small>${t("side.per", f1(d.per100k))}</small></span></li>`).join("")}</ol>`;
     $$(".rank li").forEach((li) => { li.onclick = () => select(li.dataset.id); li.onkeydown = (e) => { if (e.key === "Enter") select(li.dataset.id); }; });
   }
   function renderDistrict(d, nSites) {
@@ -368,7 +454,7 @@
         <dt>${t("side.moe")}</dt><dd>${d.schools == null ? t("na") : fmt(d.schools)}${d.students ? ", " + t("side.pupils", fmt(d.students)) : ""}</dd>
         <dt><span class="mk" style="background:var(--s1)"></span>${t("side.sm")}</dt><dd>${fmt(d.osm_school)}</dd><dt><span class="mk" style="background:var(--s2)"></span>${t("side.km")}</dt><dd>${fmt(d.osm_kinder)}</dd><dt><span class="mk" style="background:var(--s3)"></span>${t("side.cm")}</dt><dd>${fmt(d.osm_constr)}</dd></dl>
         ${sites.length ? `<table><tbody>${sites.map((s) => `<tr><td>${esc(s.name || t("side.unnamed", kindName(s.kind).toLowerCase()))}<br><span class="muted">${kindName(s.kind)}${s.near_km != null ? ", " + t("side.fromob", f1(s.near_km)) : ""}</span></td><td class="n">${f1(s.score)}</td></tr>`).join("")}</tbody></table>` : `<p class="muted">${nSites ? t("side.notop") : t("side.nosites")}</p>`}</div>`;
-    $("#back").onclick = () => { select(null); zoomTo(D.geo.features, 0.96, "#z-all"); };
+    $("#back").onclick = () => { select(null); zoomTo(GEO2.features, 0.96, "#z-all"); };
   }
 
   /* ================= INSPECTION ================= */
@@ -388,6 +474,18 @@
       rows.map((s, i) => `<tr class="click" data-id="${s.id}" tabindex="0"><td class="n muted">${i + 1}</td><td><b>${esc(s.name || t("q.unnamed"))}</b></td><td><span class="mk" style="background:var(${KIND[s.kind]})"></span>${kindName(s.kind)}</td><td>${esc(s.district)}<span class="muted">, ${esc(s.state)}</span></td><td>${pill(s.tier)}</td><td class="n">${s.near_km == null ? t("na") : f1(s.near_km) + " km"}</td><td class="n">${fmt(s.rain14)} mm</td><td class="n"><span class="inbar" style="width:${s.score * 0.6}px"></span><b>${f1(s.score)}</b></td></tr>`).join("") + "</tbody>"
       : `<tbody><tr><td class="muted">${D.priority.length ? t("q.none") : t("q.noosm")}</td></tr></tbody>`;
     $$("#queue tr.click").forEach((tr) => { const open = () => openDistrict(tr.dataset.id); tr.onclick = open; tr.onkeydown = (e) => { if (e.key === "Enter") open(); }; });
+    renderInspectMap(rows, st);
+  }
+  // Map beside the queue: the listed sites as dots (bigger = higher score), zoomed to the chosen state.
+  function renderInspectMap(rows, st) {
+    const coll = st ? { type: "FeatureCollection", features: GEO2.features.filter((f) => byId.get(f.id).state === st) } : GEO2;
+    const { s, pa, P: P2 } = mapBase($("#imap"), 520, 310, coll);
+    s.append("g").selectAll("path").data(GEO2.features).join("path").attr("d", pa).attr("class", "im").classed("on", (f) => !st || byId.get(f.id).state === st).on("click", (ev, f) => openDistrict(f.id));
+    s.append("g").selectAll("circle").data(rows.slice().reverse()).join("circle").attr("class", "isite").style("fill", (r) => `var(${KIND[r.kind]})`)
+      .attr("cx", (r) => P2(r.lon, r.lat)[0]).attr("cy", (r) => P2(r.lon, r.lat)[1]).attr("r", (r) => 3 + (r.score / 100) * 5)
+      .on("mousemove", (ev, r) => showTip(`<b>${esc(r.name || t("q.unnamed"))}</b><br>${kindName(r.kind)}, ${esc(r.district)}<br>${t("q.th.score")} ${f1(r.score)}`, ev)).on("mouseleave", hideTip).on("click", (ev, r) => openDistrict(r.id));
+    $("#imap-sum").innerHTML = KINDS.map((kd) => `<div><b style="color:var(${KIND[kd]})">${rows.filter((r) => r.kind === kd).length}</b><span>${t("near.stat." + kd)}</span></div>`).join("");
+    $("#imap-legend").innerHTML = `<span class="note" style="margin-left:0">${t("ins.map.note")} ${t("map.inset")}</span>`;
   }
   $$("#kind button").forEach((b) => (b.onclick = () => { qKind = b.dataset.k; $$("#kind button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderQueue(); }));
   $("#qstate").addEventListener("change", renderQueue);
@@ -399,7 +497,7 @@
   const DRV = ["rain", "wet", "rh", "temp", "tmin", "tmax", "dtr", "wind"];
 
   function lineChart(el, series, o) {
-    const Wc = 640, Hc = o.h || 240, m = { t: 12, r: o.right || 16, b: 26, l: 44 }, x = o.x.range([m.l, Wc - m.r]), y = o.y.range([Hc - m.b, m.t]);
+    const Wc = Math.max(300, Math.round($(el).clientWidth || 640)), Hc = o.h || 240, m = { t: 12, r: o.right || 16, b: 26, l: 44 }, x = o.x.range([m.l, Wc - m.r]), y = o.y.range([Hc - m.b, m.t]);
     const s = d3.select(el).html("").append("svg").attr("class", "chart").attr("viewBox", `0 0 ${Wc} ${Hc}`);
     y.ticks(5).forEach((tk) => { s.append("line").attr("class", "grid").attr("x1", m.l).attr("x2", Wc - m.r).attr("y1", y(tk)).attr("y2", y(tk)); s.append("text").attr("x", m.l - 8).attr("y", y(tk) + 4).attr("text-anchor", "end").text(o.yf(tk)); });
     o.xt.forEach((tk) => s.append("text").attr("x", x(tk)).attr("y", Hc - 8).attr("text-anchor", "middle").text(o.xf(tk)));
@@ -438,7 +536,7 @@
     $("#lagw").innerHTML = `<thead><tr><th class="r">${t("ev.lag.weeks")}</th>${lags.map((l) => `<th>${l}</th>`).join("")}</tr></thead><tbody>` + DRV.map((dk) => `<tr><th class="r">${t("drv." + dk)}</th>${lags.map((l) => { const r = M.lag_week.find((q) => q.driver === dk && q.lag === l); return `<td class="c" style="background:${sc(r.rho)}" title="${t("ev.lag.cell", t("drv." + dk), l, r.rho)}">${Math.round(r.rho * 100)}</td>`; }).join("")}</tr>`).join("") + `</tbody><tfoot><tr><th class="r"></th><th colspan="${lags.length}" style="text-align:left;padding-top:6px">${t("ev.lag.foot")}</th></tr></tfoot>`;
 
     // weather effects once cases are known
-    const rows = M.irr_weather, Wc = 640, rh = 15, mg = { t: 6, r: 16, b: 24, l: 150 }, Hc = mg.t + mg.b + rows.length * rh;
+    const rows = M.irr_weather, Wc = Math.max(320, Math.round($("#irr").clientWidth || 640)), rh = 18, mg = { t: 6, r: 16, b: 24, l: 170 }, Hc = mg.t + mg.b + rows.length * rh;
     const x = d3.scaleLog().domain([Math.min(0.85, d3.min(rows, (r) => r.lo)), Math.max(1.18, d3.max(rows, (r) => r.hi))]).range([mg.l, Wc - mg.r]);
     $("#irr").innerHTML = "";
     const s = d3.select("#irr").append("svg").attr("class", "chart").attr("viewBox", `0 0 ${Wc} ${Hc}`);
@@ -456,7 +554,7 @@
     const Hh = D.history, B = M.backtest_week, pm = new Map(B.week.map((w, i) => [w, B.pred[i]])), tt = Hh.week.map((w) => new Date(w));
     const act = tt.map((d, i) => [d, Hh.cases[i]]), pr = tt.map((d, i) => [d, pm.has(Hh.week[i]) ? pm.get(Hh.week[i]) : null]);
     const yrs = d3.range(tt[0].getFullYear() + 1, tt[tt.length - 1].getFullYear() + 1).map((y) => new Date(y, 0, 1));
-    lineChart("#bt", [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: 260, x: d3.scaleTime().domain([tt[0], tt[tt.length - 1]]), y: d3.scaleLinear().domain([0, d3.max(Hh.cases) * 1.05]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v),
+    lineChart("#bt", [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: 300, x: d3.scaleTime().domain([tt[0], tt[tt.length - 1]]), y: d3.scaleLinear().domain([0, d3.max(Hh.cases) * 1.05]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v),
       tip: (i) => `<b>${t("ev.bt.week", dfmt(Hh.week[i]))}</b><br>${t("ev.bt.rep", fmt(Hh.cases[i]))}` + (pr[i][1] != null ? `<br>${t("ev.bt.fc", fmt(pr[i][1]))}` : "") });
     const r2 = nw.find((r) => r.horizon === 2 && r.spec === B.spec);
     $("#bt-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("ev.bt.l1")}</span><span><i style="background:var(--s2)"></i>${t("ev.bt.l2", specName(B.spec).toLowerCase())}</span><span class="muted">${t("ev.bt.miss", fmt(Math.round(r2.mae)), r2.n)}</span>`;
@@ -498,7 +596,8 @@
     $("#m-snap").textContent = dfmt(D.meta.snapshot);
     $("#m-win").textContent = dshort(D.meta.window[0]) + " " + t("range.to") + " " + dshort(D.meta.window[1]);
     $("#foot").innerHTML = t("foot", esc(D.meta.generated));
-    renderHero(); renderKpis(); renderTop(); renderStates(); renderRoles(); renderFound();
+    themeButton();
+    renderHero(); renderHeroMap(); renderKpis(); renderTop(); renderTierDist(); renderStates(); renderRoles(); renderFound();
     renderLayerSelect(); renderInspect(); renderEvidence(); renderAbout();
     gaz = null;
     if (mapReady) { recolor(); if (selected && byId.get(selected)) renderDistrict(byId.get(selected), selectedSites); else renderRank(); paths.attr("aria-label", (f) => { const d = byId.get(f.id); return `${d.district}, ${d.state}: ${tierName(d.tier)}`; }); }
@@ -509,7 +608,18 @@
     renderAll();
   }
   $$(".lang button").forEach((b) => (b.onclick = () => setLang(b.dataset.lang)));
-  function paint() { renderEvidence(); recolor(); if (mapReady && gS) gS.selectAll("circle").attr("fill", (p) => css(KIND[p[2]])); $$("#topd .gbar").forEach((el, i) => el.style.setProperty("--c", tierColor(ranked[i].tier))); }
+  function paint() {
+    themeButton(); renderEvidence(); recolor(); renderHeroMap(); renderTierDist();
+    $$("#topd .gbar").forEach((el, i) => el.style.setProperty("--c", tierColor(ranked[i].tier)));
+  }
+  let rz;
+  addEventListener("resize", () => {          // the main map and the charts size themselves from their container
+    clearTimeout(rz);
+    rz = setTimeout(() => {
+      if (mapReady && !$("#tab-map").hidden) { $("#map").innerHTML = ""; mapReady = false; initMap(); }
+      if (!$("#tab-evidence").hidden) renderEvidence();
+    }, 250);
+  });
 
   renderAll();
   go(location.hash.slice(1), { scroll: false });

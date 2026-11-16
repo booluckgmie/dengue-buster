@@ -3,6 +3,12 @@
 window.I18N = {
   en: {
     "m.reported": "Cases reported", "m.outlook": "Outlook", "lang.aria": "Language", "tabs.aria": "Sections", "range.to": "to",
+    "theme.todark": "Switch to dark mode", "theme.tolight": "Switch to light mode",
+    "hero.map.aria": "Map of expected risk by district", "hero.map.cap": "Expected risk by district. Select one to open it.",
+    "map.inset": "East Malaysia is drawn closer to the peninsula; not to scale.", "leg.pin": "your location",
+    "leg.zoom": "Zoom in to see schools, kindergartens and construction sites.", "map.clearpin": "Clear pin",
+    "dist.h": "Districts by risk tier", "dist.row": "{0} districts, {1} million people",
+    "ins.map.aria": "Map of ranked inspection sites", "ins.map.note": "Larger dots rank higher. Select a dot to open its district.",
     "tab.today": "Today", "tab.map": "Map", "tab.inspect": "Inspection", "tab.evidence": "Evidence", "tab.about": "About the data",
 
     "find.label": "Where are you? Type an address, area or landmark", "find.ph": "e.g. Taman Desa, Kuala Lumpur, or SMK Bukit Jalil",
@@ -194,6 +200,12 @@ window.I18N = {
 
   ms: {
     "m.reported": "Kes dilaporkan", "m.outlook": "Unjuran", "lang.aria": "Bahasa", "tabs.aria": "Bahagian", "range.to": "hingga",
+    "theme.todark": "Tukar ke mod gelap", "theme.tolight": "Tukar ke mod cerah",
+    "hero.map.aria": "Peta risiko dijangka mengikut daerah", "hero.map.cap": "Risiko dijangka mengikut daerah. Pilih satu untuk membukanya.",
+    "map.inset": "Malaysia Timur dilukis lebih dekat dengan semenanjung; bukan skala sebenar.", "leg.pin": "lokasi anda",
+    "leg.zoom": "Zum untuk melihat sekolah, tadika dan tapak pembinaan.", "map.clearpin": "Padam pin",
+    "dist.h": "Daerah mengikut tahap risiko", "dist.row": "{0} daerah, {1} juta penduduk",
+    "ins.map.aria": "Peta tapak pemeriksaan tersusun", "ins.map.note": "Titik lebih besar berkedudukan lebih tinggi. Pilih titik untuk membuka daerahnya.",
     "tab.today": "Hari ini", "tab.map": "Peta", "tab.inspect": "Pemeriksaan", "tab.evidence": "Bukti", "tab.about": "Tentang data",
 
     "find.label": "Di mana anda? Taip alamat, kawasan atau mercu tanda", "find.ph": "cth. Taman Desa, Kuala Lumpur, atau SMK Bukit Jalil",

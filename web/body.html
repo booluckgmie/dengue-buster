@@ -11,6 +11,7 @@
         <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
         <button type="button" data-lang="ms" lang="ms" aria-pressed="false">BM</button>
       </div>
+      <button type="button" class="theme-btn" id="theme"></button>
     </div>
   </div>
   <nav class="tabs" id="tabs" data-i18n-aria="tabs.aria">
@@ -46,6 +47,11 @@
         </form>
         <div id="found" aria-live="polite"></div>
       </div>
+      <div class="hero-map">
+        <svg id="hero-map" role="img" data-i18n-aria="hero.map.aria"></svg>
+        <div class="hero-legend" id="hero-legend"></div>
+        <p class="fine muted" id="hero-cap"></p>
+      </div>
     </section>
 
     <section class="aud" aria-label="Choose your view">
@@ -63,6 +69,7 @@
       <section>
         <div class="head"><h2 data-i18n="top.h"></h2><p data-i18n="top.p"></p></div>
         <div class="panel pad"><div class="rows" id="topd"></div></div>
+        <div class="panel pad" id="tier-dist"></div>
       </section>
       <section>
         <div class="head"><h2 data-i18n="state.h"></h2>
@@ -96,7 +103,7 @@
     <section>
       <div class="head"><h2 data-i18n="map.h"></h2><p data-i18n="map.p"></p></div>
       <div class="work">
-        <div class="panel">
+        <div class="panel mapcard">
           <div class="controls">
             <label for="layer"><span data-i18n="map.colour"></span>
               <select id="layer"></select>
@@ -108,6 +115,10 @@
             </div>
             <label class="chk" for="ov-ob"><input type="checkbox" id="ov-ob" checked> <span data-i18n="map.ob"></span></label>
             <label class="chk" for="ov-hs"><input type="checkbox" id="ov-hs" checked> <span data-i18n="map.hs"></span></label>
+            <label class="chk" for="ov-school"><input type="checkbox" id="ov-school" checked> <span class="mk" style="background:var(--s1)"></span><span data-i18n="ins.school"></span></label>
+            <label class="chk" for="ov-kg"><input type="checkbox" id="ov-kg" checked> <span class="mk" style="background:var(--s2)"></span><span data-i18n="ins.kg"></span></label>
+            <label class="chk" for="ov-con"><input type="checkbox" id="ov-con" checked> <span class="mk" style="background:var(--s3)"></span><span data-i18n="ins.con"></span></label>
+            <button type="button" class="btn" id="clear-pin" hidden data-i18n="map.clearpin"></button>
           </div>
           <p class="layer-desc" id="layer-desc"></p>
           <div class="mapbox"><svg id="map" role="img" data-i18n-aria="map.aria"></svg></div>
@@ -122,8 +133,8 @@
   <div class="tab" id="tab-inspect" hidden>
     <section>
       <div class="head"><h2 data-i18n="ins.h"></h2><p data-i18n="ins.p"></p></div>
-      <p class="caution" id="caution"></p>
-      <div class="score-how" id="score-how"></div>
+      <div class="ins-top"><p class="caution" id="caution"></p><div class="score-how" id="score-how"></div></div>
+      <div class="ins-work">
       <div class="panel">
         <div class="controls">
           <div class="seg" role="group" data-i18n-aria="ins.type.aria" id="kind">
@@ -135,7 +146,9 @@
           <label for="qstate"><span data-i18n="ins.state"></span> <select id="qstate"></select></label>
           <span class="muted" id="q-note"></span>
         </div>
-        <div class="scroll" style="max-height:560px;overflow-y:auto"><table id="queue"></table></div>
+        <div class="scroll q-scroll"><table id="queue"></table></div>
+      </div>
+      <div class="panel imap-card"><svg id="imap" role="img" data-i18n-aria="ins.map.aria"></svg><div class="tiles" id="imap-sum"></div><div class="legend" id="imap-legend"></div></div>
       </div>
     </section>
   </div>
