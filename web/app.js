@@ -413,6 +413,8 @@
     selected = id;
     if (!mapReady) return;
     paths.classed("sel", (f) => f.id === id); gS.selectAll("*").remove();
+    svg.classed("has-sel", !!id);
+    if (id) paths.filter((f) => f.id === id).raise();      // draw the selected outline on top of its neighbours
     if (!id) { renderRank(); return; }
     const d = byId.get(id), idx = D.districts.indexOf(d), pts = [];
     KINDS.forEach((kd) => (D.sites[kd] || []).forEach((p) => { if (p[2] === idx) pts.push([p[0], p[1], kd]); }));

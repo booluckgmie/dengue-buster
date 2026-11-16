@@ -394,3 +394,10 @@ button.row:hover { background: var(--surface-2); }
 #queue .inbar { max-width: 40px; }
 .scroll > #queue { min-width: 760px; }
 #queue td:last-child { white-space: nowrap; }
+
+/* Selected district: highlight its own shape. The browser's rectangular focus outline is scaled by the map zoom and turns
+   into a thick box, so districts get a shape-following focus style instead. */
+#map path.d:focus, #map path.d:focus-visible { outline: none; }
+#map path.d:focus-visible { stroke: var(--focus); stroke-width: 3; }
+#map.has-sel path.d:not(.sel) { fill-opacity: .6; }
+#map path.d.sel { stroke: var(--ink); stroke-width: 2.5; fill-opacity: 1; }
