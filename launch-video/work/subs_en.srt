@@ -1,0 +1,48 @@
+1
+00:00:00,750 --> 00:00:05,450
+After the rain, water collects in places we forget to look.
+
+2
+00:00:06,050 --> 00:00:13,320
+For a parent, a health officer and an analyst, the questions are different. The need is the same: know sooner.
+
+3
+00:00:13,350 --> 00:00:18,310
+This is Dengue Buster: a two-week outlook for every district in Malaysia.
+
+4
+00:00:19,850 --> 00:00:25,810
+Type where you are. See your district's risk, and what is happening within a few kilometres.
+
+5
+00:00:29,250 --> 00:00:32,830
+Then, simple steps that fit the risk level.
+
+6
+00:00:37,350 --> 00:00:43,480
+Open the map. Switch layers: rain, density, schools, construction.
+
+7
+00:00:47,850 --> 00:00:53,090
+Every estimate shows its reasons and its range, and who is most exposed.
+
+8
+00:00:54,250 --> 00:01:03,920
+For field teams, a ranked list of schools, kindergartens and building sites. Priorities to inspect first, not findings about any site.
+
+9
+00:01:04,250 --> 00:01:12,190
+And for analysts, the evidence in the open: what predicts dengue, what does not, and how often the forecast missed.
+
+10
+00:01:13,150 --> 00:01:17,410
+In English or Bahasa Malaysia. Light or dark.
+
+11
+00:01:18,850 --> 00:01:25,350
+Built on open data, refreshed every day. District figures are estimates, so we show you the range.
+
+12
+00:01:25,450 --> 00:01:31,280
+Check your surroundings. Clear standing water. Look out for each other.
+

@@ -13,3 +13,9 @@ work/*.wav
 work/flow_error_*.png
 work/sc_*.jpg
 work/*.log
+
+# one-off debugging scripts
+work/patch_scenes.py
+work/sc_test.js
+work/test_scenes.js
+work/zoom_test.js
