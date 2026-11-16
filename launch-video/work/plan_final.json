@@ -1,0 +1,116 @@
+{
+ "D": 11.23,
+ "total": 103.23,
+ "captions": [
+  {
+   "a": 0.35,
+   "b": 3.17,
+   "en": "Over eighty-three thousand dengue cases this year.",
+   "ms": "Lebih 83,000 kes denggi tahun ini."
+  },
+  {
+   "a": 3.37,
+   "b": 4.95,
+   "en": "Sixty-eight deaths.",
+   "ms": "68 kematian."
+  },
+  {
+   "a": 5.2,
+   "b": 8.5,
+   "en": "About four thousand more expected in the next two weeks.",
+   "ms": "Kira-kira 4,000 lagi dijangka dalam dua minggu akan datang."
+  },
+  {
+   "a": 8.8,
+   "b": 10.530000000000001,
+   "en": "Is your district next?",
+   "ms": "Adakah daerah anda yang seterusnya?"
+  },
+  {
+   "a": 11.98,
+   "b": 16.68,
+   "en": "After the rain, water collects in places we forget to look.",
+   "ms": "Selepas hujan, air bertakung di tempat yang kita terlupa periksa."
+  },
+  {
+   "a": 17.28,
+   "b": 24.55,
+   "en": "For a parent, a health officer and an analyst, the questions are different. The need is the same: know sooner.",
+   "ms": "Bagi ibu bapa, pegawai kesihatan dan penganalisis, soalannya berbeza. Keperluannya sama: tahu lebih awal."
+  },
+  {
+   "a": 24.58,
+   "b": 29.54,
+   "en": "This is Dengue Buster: a two-week outlook for every district in Malaysia.",
+   "ms": "Inilah Dengue Buster: unjuran dua minggu untuk setiap daerah di Malaysia."
+  },
+  {
+   "a": 31.08,
+   "b": 37.04,
+   "en": "Type where you are. See your district's risk, and what is happening within a few kilometres.",
+   "ms": "Taip lokasi anda. Lihat risiko daerah anda dan apa yang berlaku dalam lingkungan beberapa kilometer."
+  },
+  {
+   "a": 40.48,
+   "b": 44.06,
+   "en": "Then, simple steps that fit the risk level.",
+   "ms": "Kemudian, langkah mudah yang sesuai dengan tahap risiko."
+  },
+  {
+   "a": 48.58,
+   "b": 54.71,
+   "en": "Open the map. Switch layers: rain, density, schools, construction.",
+   "ms": "Buka peta. Tukar lapisan: hujan, kepadatan, sekolah, pembinaan."
+  },
+  {
+   "a": 59.08,
+   "b": 64.32,
+   "en": "Every estimate shows its reasons and its range, and who is most exposed.",
+   "ms": "Setiap anggaran memaparkan sebab dan julatnya, serta siapa yang paling terdedah."
+  },
+  {
+   "a": 65.48,
+   "b": 75.15,
+   "en": "For field teams, a ranked list of schools, kindergartens and building sites. Priorities to inspect first, not findings about any site.",
+   "ms": "Bagi pasukan lapangan, senarai tersusun sekolah, tadika dan tapak pembinaan. Keutamaan untuk diperiksa dahulu, bukan dapatan tentang mana-mana tapak."
+  },
+  {
+   "a": 75.48,
+   "b": 83.42,
+   "en": "And for analysts, the evidence in the open: what predicts dengue, what does not, and how often the forecast missed.",
+   "ms": "Dan bagi penganalisis, bukti secara terbuka: apa yang meramal denggi, apa yang tidak, dan berapa kerap ramalan tersasar."
+  },
+  {
+   "a": 84.38,
+   "b": 88.64,
+   "en": "In English or Bahasa Malaysia. Light or dark.",
+   "ms": "Dalam Bahasa Inggeris atau Bahasa Malaysia. Cerah atau gelap."
+  },
+  {
+   "a": 90.08,
+   "b": 96.58,
+   "en": "Built on open data, refreshed every day. District figures are estimates, so we show you the range.",
+   "ms": "Dibina atas data terbuka, dikemas kini setiap hari. Angka daerah ialah anggaran, jadi kami tunjukkan julatnya."
+  },
+  {
+   "a": 96.68,
+   "b": 102.51,
+   "en": "Check your surroundings. Clear standing water. Look out for each other.",
+   "ms": "Semak persekitaran anda. Bersihkan air bertakung. Saling menjaga."
+  }
+ ],
+ "start": {
+  "1": 11.23,
+  "2": 17.23,
+  "3": 24.23,
+  "4": 29.23,
+  "5": 40.23,
+  "6": 47.23,
+  "7": 58.23,
+  "8": 65.23,
+  "9": 75.23,
+  "10": 84.23,
+  "11": 90.23,
+  "12": 96.23
+ }
+}

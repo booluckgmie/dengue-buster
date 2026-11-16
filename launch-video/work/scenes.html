@@ -150,13 +150,53 @@ function scene12() {
   };
 }
 
-const SCENES = { 1: scene1, 2: scene2, 3: scene3, 11: scene11, 12: scene12 };
-window.load = async (n, captions, offset) => {
+
+/* ---------------- scene 0: the hook, with the live figures ---------------- */
+function scene0(h) {
+  const F = h.figures, T = h.t, fmt = (n) => Math.round(n).toLocaleString("en-US");
+  const snap = new Date(h.snapshot + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  layer.appendChild(el('<div class="abs" style="inset:0;background:#0b1316"></div>'));
+  const glow = el('<div class="abs" style="left:-10%;top:-10%;width:120%;height:120%;background:radial-gradient(60% 70% at 50% 52%,rgba(168,28,86,.66),rgba(138,21,67,.24) 45%,transparent 72%)"></div>'); layer.appendChild(glow);
+  layer.appendChild(el('<div class="abs" style="inset:0;background:radial-gradient(90% 90% at 50% 50%,transparent 55%,rgba(0,0,0,.6))"></div>'));
+  const flash = el('<div class="abs" style="inset:0;background:#ff4d7d;opacity:0"></div>'); layer.appendChild(flash);
+  const live = el(`<div class="abs" style="left:90px;top:56px;display:flex;align-items:center;gap:18px;font:500 30px/1 var(--font-m);color:#f79bb8"><i class="dot" style="display:block;width:20px;height:20px;border-radius:50%;background:#ff4d7d"></i>LIVE FIGURES &nbsp;&middot;&nbsp; REPORTED TO ${snap.toUpperCase()}</div>`);
+  const eyebrow = el('<div class="abs" style="left:0;right:0;top:132px;text-align:center;font:700 44px/1 var(--font-d);letter-spacing:.16em;color:#f79bb8">DENGUE IN MALAYSIA, RIGHT NOW</div>');
+  const A = el('<div class="abs" style="left:0;right:0;top:190px;text-align:center;font:700 310px/1 var(--font-d);letter-spacing:-.03em;color:#fff;font-variant-numeric:tabular-nums">0</div>');
+  const Al = el('<div class="abs" style="left:0;right:0;top:515px;text-align:center;font:600 62px/1 var(--font-d);color:#e8f0f0">dengue cases this year</div>');
+  const B = el('<div class="abs" style="left:230px;top:605px;width:640px;text-align:center"><div class="n" style="font:700 230px/1 var(--font-d);color:#ff7aa6;font-variant-numeric:tabular-nums">0</div><div style="font:600 54px/1.1 var(--font-d);color:#f79bb8;margin-top:6px">deaths</div></div>');
+  const C = el('<div class="abs" style="left:1050px;top:605px;width:640px;text-align:center"><div class="n" style="font:700 230px/1 var(--font-d);color:#fff;font-variant-numeric:tabular-nums">0</div><div style="font:600 54px/1.1 var(--font-d);color:#cfe2e1;margin-top:6px">new cases today</div></div>');
+  const X = el(`<div class="abs" style="left:200px;width:1520px;top:925px;padding:22px 40px;border:3px solid #58c9c5;border-radius:26px;background:rgba(88,201,197,.12);text-align:center;white-space:nowrap;font:600 48px/1.1 var(--font-d);color:#e8f0f0"><span style="color:#58c9c5">about ${fmt(F.exp14)} more</span> expected in the next 2 weeks</div>`);
+  const Q = el('<div class="abs" style="left:0;right:0;top:330px;text-align:center;font:700 176px/1.05 var(--font-d);letter-spacing:-.02em;color:#fff;text-shadow:0 0 60px rgba(255,77,125,.55)">Is your district<br><span style="color:#ff7aa6">next?</span></div>');
+  const src = el(`<div class="abs" style="left:0;right:0;bottom:22px;text-align:center;font:400 22px/1.3 var(--font-b);color:#80928f">Source: Ministry of Health iDengue bulletin, ${snap}. Expected cases are a Dengue Buster model estimate.</div>`);
+  [eyebrow, live, A, Al, B, C, X, Q, src].forEach((n) => layer.appendChild(n));
+  const group = [eyebrow, A, Al, B, C, X];
+  return (t) => {
+    const beat = (((t - .2) % .86) + .86) % .86, pulse = t < .2 ? 0 : Math.exp(-beat * 5.5) + (beat > .22 ? .55 * Math.exp(-(beat - .22) * 7) : 0);
+    glow.style.opacity = Math.min(1, .55 + .4 * pulse); glow.style.transform = `scale(${1 + .03 * pulse})`;
+    live.style.opacity = prog(t, .1, .3); live.querySelector(".dot").style.opacity = Math.sin(t * 9) > 0 ? 1 : .45;
+    eyebrow.style.opacity = eo(prog(t, .1, .4));
+    A.textContent = fmt(F.cum * eo(prog(t, T.h1, 1.9))); A.style.opacity = prog(t, T.h1 - .05, .15);
+    const kl = eo(prog(t, T.h1 + 1.5, .5)); Al.style.opacity = kl; Al.style.transform = `translateY(${(1 - kl) * 18}px)`;
+    const dt = t - T.h2, shake = dt > 0 && dt < .35 ? 1 - dt / .35 : 0;
+    B.querySelector(".n").textContent = Math.round(F.deaths * eo(prog(t, T.h2, .8))); B.style.opacity = prog(t, T.h2 - .05, .1);
+    B.style.transform = `scale(${1 + (dt > 0 ? .14 * Math.exp(-dt * 6) : 0)}) translateX(${Math.sin(t * 90) * 9 * shake}px)`;
+    flash.style.opacity = dt > 0 ? .34 * Math.exp(-dt * 9) : 0;
+    C.querySelector(".n").textContent = Math.round(F.today * eo(prog(t, T.h2 + .9, .9))); C.style.opacity = prog(t, T.h2 + .85, .3);
+    const kx = eo(prog(t, T.h3, .45)); X.style.opacity = kx; X.style.transform = `translateY(${(1 - kx) * 30}px)`;
+    const kq = eo(prog(t, T.h4 - .1, .5));      // the question: everything else drops back
+    group.forEach((n) => { n.style.opacity = parseFloat(n.style.opacity || 1) * (1 - .95 * kq); });
+    Q.style.opacity = kq; Q.style.transform = `scale(${.92 + .08 * kq})`; src.style.opacity = prog(t, .6, .6);
+  };
+}
+
+const SCENES = { 0: scene0, 1: scene1, 2: scene2, 3: scene3, 11: scene11, 12: scene12 };
+window.load = async (n, captions, offset, extra) => {
   cur = n; CAPS = captions.filter((c) => c.scene === n); OFFSET = offset; layer.innerHTML = ""; cv.style.display = "none";
-  S.draw = SCENES[n](); await document.fonts.ready; await new Promise((r) => setTimeout(r, 400));
+  S.draw = SCENES[n](extra); await document.fonts.ready; await new Promise((r) => setTimeout(r, 400));
 };
 window.seek = (t) => {
   S.draw(t);
+  document.getElementById("cap").style.opacity = 0; return;   // no burned-in subtitles
   const g = t + OFFSET, c = CAPS.find((x) => g >= x.a && g <= x.b), cap = document.getElementById("cap");
   if (!c || (cur === 12 && false)) { cap.style.opacity = 0; return; }
   cap.querySelector(".en").textContent = cur === 12 ? "" : c.en; cap.querySelector(".en").style.display = cur === 12 ? "none" : "block"; cap.querySelector(".ms").textContent = c.ms;

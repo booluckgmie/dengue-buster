@@ -1,48 +1,64 @@
 1
-00:00:00,750 --> 00:00:05,450
-Selepas hujan, air bertakung di tempat yang kita terlupa periksa.
+00:00:00,350 --> 00:00:03,170
+Lebih 83,000 kes denggi tahun ini.
 
 2
-00:00:06,050 --> 00:00:13,320
-Bagi ibu bapa, pegawai kesihatan dan penganalisis, soalannya berbeza. Keperluannya sama: tahu lebih awal.
+00:00:03,370 --> 00:00:04,950
+68 kematian.
 
 3
-00:00:13,350 --> 00:00:18,310
-Inilah Dengue Buster: unjuran dua minggu untuk setiap daerah di Malaysia.
+00:00:05,200 --> 00:00:08,500
+Kira-kira 4,000 lagi dijangka dalam dua minggu akan datang.
 
 4
-00:00:19,850 --> 00:00:25,810
-Taip lokasi anda. Lihat risiko daerah anda dan apa yang berlaku dalam lingkungan beberapa kilometer.
+00:00:08,800 --> 00:00:10,530
+Adakah daerah anda yang seterusnya?
 
 5
-00:00:29,250 --> 00:00:32,830
-Kemudian, langkah mudah yang sesuai dengan tahap risiko.
+00:00:11,980 --> 00:00:16,680
+Selepas hujan, air bertakung di tempat yang kita terlupa periksa.
 
 6
-00:00:37,350 --> 00:00:43,480
-Buka peta. Tukar lapisan: hujan, kepadatan, sekolah, pembinaan.
+00:00:17,280 --> 00:00:24,550
+Bagi ibu bapa, pegawai kesihatan dan penganalisis, soalannya berbeza. Keperluannya sama: tahu lebih awal.
 
 7
-00:00:47,850 --> 00:00:53,090
-Setiap anggaran memaparkan sebab dan julatnya, serta siapa yang paling terdedah.
+00:00:24,580 --> 00:00:29,540
+Inilah Dengue Buster: unjuran dua minggu untuk setiap daerah di Malaysia.
 
 8
-00:00:54,250 --> 00:01:03,920
-Bagi pasukan lapangan, senarai tersusun sekolah, tadika dan tapak pembinaan. Keutamaan untuk diperiksa dahulu, bukan dapatan tentang mana-mana tapak.
+00:00:31,080 --> 00:00:37,040
+Taip lokasi anda. Lihat risiko daerah anda dan apa yang berlaku dalam lingkungan beberapa kilometer.
 
 9
-00:01:04,250 --> 00:01:12,190
-Dan bagi penganalisis, bukti secara terbuka: apa yang meramal denggi, apa yang tidak, dan berapa kerap ramalan tersasar.
+00:00:40,480 --> 00:00:44,060
+Kemudian, langkah mudah yang sesuai dengan tahap risiko.
 
 10
-00:01:13,150 --> 00:01:17,410
-Dalam Bahasa Inggeris atau Bahasa Malaysia. Cerah atau gelap.
+00:00:48,580 --> 00:00:54,710
+Buka peta. Tukar lapisan: hujan, kepadatan, sekolah, pembinaan.
 
 11
-00:01:18,850 --> 00:01:25,350
-Dibina atas data terbuka, dikemas kini setiap hari. Angka daerah ialah anggaran, jadi kami tunjukkan julatnya.
+00:00:59,080 --> 00:01:04,320
+Setiap anggaran memaparkan sebab dan julatnya, serta siapa yang paling terdedah.
 
 12
-00:01:25,450 --> 00:01:31,280
+00:01:05,480 --> 00:01:15,150
+Bagi pasukan lapangan, senarai tersusun sekolah, tadika dan tapak pembinaan. Keutamaan untuk diperiksa dahulu, bukan dapatan tentang mana-mana tapak.
+
+13
+00:01:15,480 --> 00:01:23,420
+Dan bagi penganalisis, bukti secara terbuka: apa yang meramal denggi, apa yang tidak, dan berapa kerap ramalan tersasar.
+
+14
+00:01:24,380 --> 00:01:28,640
+Dalam Bahasa Inggeris atau Bahasa Malaysia. Cerah atau gelap.
+
+15
+00:01:30,080 --> 00:01:36,580
+Dibina atas data terbuka, dikemas kini setiap hari. Angka daerah ialah anggaran, jadi kami tunjukkan julatnya.
+
+16
+00:01:36,680 --> 00:01:42,510
 Semak persekitaran anda. Bersihkan air bertakung. Saling menjaga.
 

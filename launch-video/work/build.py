@@ -1,13 +1,13 @@
 """Encodes each segment, joins them with 0.5 s crossfades, adds the soundtrack."""
 import json, subprocess, pathlib, sys
 W = pathlib.Path('work'); FPS = 30
-plan = json.load(open(W / 'plan.json'))
+plan = json.load(open(W / 'plan.json')); hook = json.load(open(W / 'plan_hook.json'))
 def run(cmd):
     r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode: print(' '.join(cmd)[:300]); print(r.stderr[-1500:]); sys.exit(1)
 
 # 1. illustrated scenes: image sequences -> mp4
-for n in (1, 2, 3, 11, 12):
+for n in (0, 1, 2, 3, 11, 12):
     run(['ffmpeg', '-y', '-framerate', str(FPS), '-i', f'work/frames/s{n:02d}/%06d.jpg', '-c:v', 'libx264', '-crf', '14', '-preset', 'medium', '-pix_fmt', 'yuv420p', '-r', str(FPS), f'work/seg_s{n:02d}.mp4'])
     print('segment', n)
 
@@ -27,7 +27,7 @@ run(['ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', 'work/live_list.txt', '
 print('segment live')
 
 # 3. crossfade chain
-segs = [('s01', 6.5), ('s02', 7.5), ('s03', 5.5), ('live', LIVE_LEN), ('s11', 6.5), ('s12', 7.0)]
+segs = [('s00', round(hook['D'] + 0.5, 2)), ('s01', 6.5), ('s02', 7.5), ('s03', 5.5), ('live', LIVE_LEN), ('s11', 6.5), ('s12', 7.0)]
 X = 0.5; inputs = []; fc = []; L = segs[0][1]
 for name, _ in segs: inputs += ['-i', f'work/seg_{name}.mp4']
 prev = '[0:v]'

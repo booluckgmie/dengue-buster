@@ -91,10 +91,7 @@ const INJECT = `(() => { const run = () => {
   const setSel = (sel, v) => page.evaluate(([s, val]) => { const e = document.querySelector(s); e.value = val; e.dispatchEvent(new Event('change', { bubbles: true })); }, [sel, v]);
   const flash = (sel, ms) => page.evaluate(([s, m]) => window.__flash(s, m), [sel, ms]);
 
-  // ---- captions run alongside the flow
-  const caps = plan.captions.filter((c) => c.scene >= 4 && c.scene <= 10).map((c) => ({ ...c, a: c.a - plan.live_start, b: c.b - plan.live_start }));
-  (async () => { for (const c of caps) { await waitUntil(c.a); await page.evaluate(([en, ms]) => window.__cap(en, ms), [c.en, c.ms]); await waitUntil(c.b); await page.evaluate(() => window.__cap(null)); } })().catch(() => {});
-
+  // no burned-in subtitles in the film
   try { flow: {
   // ===== Scene 4: Am I affected? (T 0 to 11)
   await waitUntil(1.0); await clickAt('#find', 700);
