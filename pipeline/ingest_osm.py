@@ -18,11 +18,13 @@ SELECTORS = ['nwr["amenity"="school"](area.a);', 'nwr["amenity"="kindergarten"](
              'nwr["landuse"="construction"](area.a);nwr["building"="construction"](area.a);']
 
 
-def _state(state: str, iso: str, max_age_days=30) -> list:
+def _state(state: str, iso: str, max_age_days=30, fetch=True) -> list:
     p = CACHE / "osm" / f"{iso}.json"
     p.parent.mkdir(parents=True, exist_ok=True)
     if p.exists() and time.time() - p.stat().st_mtime < max_age_days * 86400:
         return json.loads(p.read_text())
+    if not fetch:
+        return json.loads(p.read_text()) if p.exists() else []
     els = []
     try:   # one small query per site type: the public Overpass mirrors time out on big combined queries
         for sel in SELECTORS:
@@ -44,11 +46,11 @@ def _state(state: str, iso: str, max_age_days=30) -> list:
     return rows
 
 
-def sites(dist: pd.DataFrame) -> pd.DataFrame:
+def sites(dist: pd.DataFrame, fetch: bool = True) -> pd.DataFrame:
     """All sites with the district id they fall in (point-in-polygon)."""
     rows = []
     for state, iso in STATE_ISO.items():
-        rows += _state(state, iso)
+        rows += _state(state, iso, fetch=fetch)
     df = pd.DataFrame(rows).drop_duplicates(["kind", "lat", "lon"])
     tree = STRtree(dist.geom.values)
     pts = points(df.lon.values, df.lat.values)

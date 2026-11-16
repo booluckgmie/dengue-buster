@@ -30,7 +30,7 @@ def suitability(temp, rain14, rh):
     return 100 * np.clip(briere, 0, 1) * (0.35 + 0.65 * rain) * hum
 
 
-def main(skip_live=False, skip_osm=False):
+def main(skip_live=False, skip_osm=False, osm_cached=False):
     t0 = time.time()
     log = lambda m: print(f"[{time.time() - t0:5.0f}s] {m}", flush=True)
 
@@ -60,7 +60,7 @@ def main(skip_live=False, skip_osm=False):
     log("weather")
     wx = ingest_weather.combined(dist)
     log("OSM exposure sites")
-    sites = ingest_osm.sites(dist) if not skip_osm else pd.DataFrame(columns=["kind", "name", "lat", "lon", "id"])
+    sites = ingest_osm.sites(dist, fetch=not osm_cached) if not skip_osm else pd.DataFrame(columns=["kind", "name", "lat", "lon", "id"])
 
     # ------------------------------------------------------------------ 2. spatial weights
     W = spatial.adjacency(dist.geom.values, dist.id.values, dist.lat.values, dist.lon.values)
@@ -239,7 +239,7 @@ def main(skip_live=False, skip_osm=False):
         {"name": "DOSM / data.gov.my", "what": "District population by age and sex, income, poverty, schools, enrolment; boundaries", "cadence": "annual",
          "latest": str(pop_year), "rows": f"{len(dist)} districts", "url": "https://open.dosm.gov.my/"},
         {"name": "OpenStreetMap", "what": "Schools, kindergartens, mapped construction sites", "cadence": "monthly refresh",
-         "latest": datetime.now().strftime("%Y-%m"), "rows": f"{len(sites):,} sites", "url": "https://www.openstreetmap.org/"},
+         "latest": datetime.now().strftime("%Y-%m"), "rows": f"{len(sites):,} sites in {sites.id.map(dict(zip(dist.id, dist.state))).nunique() if len(sites) else 0} of 16 states", "url": "https://www.openstreetmap.org/"},
         {"name": "NOAA CPC / PSL", "what": "ENSO (ONI) and Indian Ocean Dipole indices", "cadence": "monthly",
          "latest": str(indices.month.max().date())[:7], "rows": f"{len(indices)} months", "url": "https://www.cpc.ncep.noaa.gov/"},
     ]
@@ -265,7 +265,7 @@ def main(skip_live=False, skip_osm=False):
                   for k in ("school", "kindergarten", "construction")} if len(sites) else {},
         "priority": [{"kind": r.kind, "name": r.name if isinstance(r.name, str) else "", "lat": _r(r.lat, 4), "lon": _r(r.lon, 4), "district": r.district, "state": r.state,
                       "id": r.id, "score": _r(r.score, 1), "near_km": _r(r.near_km, 1), "rain14": _r(r.rain14, 0), "tier": r.tier}
-                     for r in prio.head(400).itertuples()] if len(prio) else [],
+                     for r in prio.groupby("kind").head(150).itertuples()] if len(prio) else [],
         "models": {
             "region_month": json.loads(sc_m.drop(columns="groups").round(4).to_json(orient="records")),
             "national_week": json.loads(sc_w.round(4).to_json(orient="records")),
@@ -297,5 +297,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--skip-live", action="store_true", help="do not scrape iDengue; reuse the last snapshot in data/feed")
     ap.add_argument("--skip-osm", action="store_true")
+    ap.add_argument("--osm-cached", action="store_true", help="use only OSM states already in data/cache (no Overpass calls)")
     a = ap.parse_args()
-    main(a.skip_live, a.skip_osm)
+    main(a.skip_live, a.skip_osm, a.osm_cached)

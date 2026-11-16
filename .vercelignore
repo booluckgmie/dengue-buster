@@ -1,0 +1,7 @@
+# The site is the pre-built static dashboard in web/. Keep the Python pipeline out of the deployment
+# so Vercel does not try to build it as a Python app.
+pipeline
+tests
+data
+requirements.txt
+.github
