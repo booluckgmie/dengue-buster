@@ -18,11 +18,11 @@ def main():
     if "--inline" in sys.argv:
         out = sys.argv[sys.argv.index("--inline") + 1]
         html = (f'{TITLE}\n<meta name="claude:viewport-fit-sides" content="cover">\n{FONTS}\n<style>\n{(WEB / "styles.css").read_text()}</style>\n'
-                f'{body}\n{D3}\n<script src="data/bundle.js"></script>\n<script>\n{(WEB / "app.js").read_text()}</script>\n')
+                f'{body}\n{D3}\n<script src="data/bundle.js"></script>\n<script>\n{(WEB / "i18n.js").read_text()}</script>\n<script>\n{(WEB / "app.js").read_text()}</script>\n')
         open(out, "w").write(html)
         return
     html = (f'<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-            f'{TITLE}\n{FONTS}\n<link rel="stylesheet" href="styles.css">\n</head>\n<body>\n{body}\n{D3}\n<script src="data/bundle.js"></script>\n<script src="app.js"></script>\n</body>\n</html>\n')
+            f'{TITLE}\n{FONTS}\n<link rel="stylesheet" href="styles.css">\n</head>\n<body>\n{body}\n{D3}\n<script src="data/bundle.js"></script>\n<script src="i18n.js"></script>\n<script src="app.js"></script>\n</body>\n</html>\n')
     (WEB / "index.html").write_text(html)
 
 

@@ -11,7 +11,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from .config import CACHE, FEED, IDENGUE_TO_REGION, REGIONS, URLS, norm_region
+from .config import FEED, IDENGUE_TO_REGION, REFERENCE, REGIONS, URLS, norm_region
 from .http import get
 
 TAG = re.compile(r"<script.*?</script>|<style.*?</style>|<[^>]+>", re.S)
@@ -80,7 +80,7 @@ def parse_outbreaks(h: str, region: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------- geocoding (public locality names only)
-_GC = CACHE / "geocode.json"
+_GC = REFERENCE / "geocode.json"          # committed: grows as new locality names appear, so daily CI runs only look up new ones
 _STATE_ALIASES = {"W.P. Kuala Lumpur & Putrajaya": ["kuala lumpur", "putrajaya"], "W.P. Labuan": ["labuan"],
                   "Pulau Pinang": ["pulau pinang", "penang"], "Melaka": ["melaka", "malacca"]}
 

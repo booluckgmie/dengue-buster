@@ -15,16 +15,20 @@
       Dengue Buster
     </div>
     <div class="meta">
-      <span><span class="dot"></span>Cases reported <b id="m-snap"></b></span>
-      <span class="hide-s">Outlook <b id="m-win"></b></span>
+      <span><span class="dot"></span><span data-i18n="m.reported"></span> <b id="m-snap"></b></span>
+      <span class="hide-s"><span data-i18n="m.outlook"></span> <b id="m-win"></b></span>
+      <div class="seg lang" role="group" data-i18n-aria="lang.aria">
+        <button type="button" data-lang="en" lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="ms" lang="ms" aria-pressed="false">BM</button>
+      </div>
     </div>
   </div>
-  <nav class="tabs" id="tabs" aria-label="Sections">
-    <button type="button" data-tab="today">Today</button>
-    <button type="button" data-tab="map">Map</button>
-    <button type="button" data-tab="inspect">Inspection</button>
-    <button type="button" data-tab="evidence">Evidence</button>
-    <button type="button" data-tab="about">About the data</button>
+  <nav class="tabs" id="tabs" data-i18n-aria="tabs.aria">
+    <button type="button" data-tab="today" data-i18n="tab.today"></button>
+    <button type="button" data-tab="map" data-i18n="tab.map"></button>
+    <button type="button" data-tab="inspect" data-i18n="tab.inspect"></button>
+    <button type="button" data-tab="evidence" data-i18n="tab.evidence"></button>
+    <button type="button" data-tab="about" data-i18n="tab.about"></button>
   </nav>
 </div></div>
 
@@ -39,42 +43,42 @@
         <h1 id="h1"></h1>
         <p class="lead" id="hsub"></p>
         <form class="find" id="find-form" autocomplete="off">
-          <label for="find">Where are you? Type an address, area or landmark</label>
+          <label for="find" data-i18n="find.label"></label>
           <div class="find-row">
-            <input id="find" type="search" list="dlist" placeholder="e.g. Taman Desa, Kuala Lumpur, or SMK Bukit Jalil" enterkeyhint="search">
-            <button type="submit" class="btn primary">Check my surroundings</button>
-            <button type="button" class="btn" id="locate">Use my location</button>
+            <input id="find" type="search" list="dlist" data-i18n-ph="find.ph" enterkeyhint="search">
+            <button type="submit" class="btn primary" data-i18n="find.submit"></button>
+            <button type="button" class="btn" id="locate" data-i18n="find.locate"></button>
           </div>
           <datalist id="dlist"></datalist>
           <p class="fine" id="find-msg" aria-live="polite"></p>
           <div class="cands" id="cands"></div>
-          <p class="fine muted">The text you type is sent to the Photon (OpenStreetMap) geocoder to find coordinates. This page does not store it. "Use my location" stays in your browser.</p>
+          <p class="fine muted" data-i18n="find.privacy"></p>
         </form>
         <div id="found" aria-live="polite"></div>
       </div>
     </section>
 
     <section class="aud" aria-label="Choose your view">
-      <button type="button" class="aud-c" data-go="find"><b>I live or work here</b><span>See if your district is at risk and what helps.</span></button>
-      <button type="button" class="aud-c" data-go="inspect"><b>I plan field work</b><span>Schools, kindergartens and building sites to visit first.</span></button>
-      <button type="button" class="aud-c" data-go="evidence"><b>I analyse the data</b><span>Which factors predict cases, and how well.</span></button>
+      <button type="button" class="aud-c" data-go="find"><b data-i18n="aud.1.t"></b><span data-i18n="aud.1.d"></span></button>
+      <button type="button" class="aud-c" data-go="inspect"><b data-i18n="aud.2.t"></b><span data-i18n="aud.2.d"></span></button>
+      <button type="button" class="aud-c" data-go="evidence"><b data-i18n="aud.3.t"></b><span data-i18n="aud.3.d"></span></button>
     </section>
 
     <section>
-      <div class="head"><h2>Right now</h2><p>The latest national figures, updated every day.</p></div>
+      <div class="head"><h2 data-i18n="now.h"></h2><p data-i18n="now.p"></p></div>
       <div class="kpis" id="kpis"></div>
     </section>
 
     <div class="grid2 top-grid">
       <section>
-        <div class="head"><h2>Where risk is highest</h2><p>Expected cases per 100,000 residents over the next 2 weeks. Select a district to open it on the map.</p></div>
+        <div class="head"><h2 data-i18n="top.h"></h2><p data-i18n="top.p"></p></div>
         <div class="panel pad"><div class="rows" id="topd"></div></div>
       </section>
       <section>
-        <div class="head"><h2>State by state</h2>
-          <div class="seg" role="group" aria-label="Measure" id="st-metric">
-            <button type="button" data-m="inc" aria-pressed="true">Per 100,000 people</button>
-            <button type="button" data-m="cum" aria-pressed="false">Total cases</button>
+        <div class="head"><h2 data-i18n="state.h"></h2>
+          <div class="seg" role="group" data-i18n-aria="state.aria" id="st-metric">
+            <button type="button" data-m="inc" aria-pressed="true" data-i18n="state.m.inc"></button>
+            <button type="button" data-m="cum" aria-pressed="false" data-i18n="state.m.cum"></button>
           </div>
         </div>
         <div class="panel pad"><div class="rows" id="states"></div><p class="muted foot" id="st-note"></p></div>
@@ -82,17 +86,17 @@
     </div>
 
     <section>
-      <div class="head"><h2>Who acts on this</h2><p>One shared forecast, different decisions. Each row shows what this page gives that group today, and what is still missing.</p></div>
+      <div class="head"><h2 data-i18n="roles.h"></h2><p data-i18n="roles.p"></p></div>
       <div class="panel scroll"><table id="roles"></table></div>
       <p class="fine muted" id="roles-note"></p>
     </section>
 
     <section>
-      <div class="head"><h2>How to read this page</h2></div>
+      <div class="head"><h2 data-i18n="how.h"></h2></div>
       <div class="how">
-        <div class="panel pad"><span class="tiers"><i class="t-Low"></i><i class="t-Moderate"></i><i class="t-High"></i><i class="t-Very"></i></span><h3>Risk tiers</h3><p>Each district gets a tier from how many cases are expected for every 100,000 residents in the next 14 days. <b>Low</b> is under 3, <b>Very high</b> is 16 or more.</p></div>
-        <div class="panel pad"><span class="big-n">217</span><h3>Expected cases</h3><p>A best estimate for the district, shown with a likely range. Small districts swing a lot, so look at the tier and the range, not one exact number.</p></div>
-        <div class="panel pad"><span class="big-n">~</span><h3>Estimates, not counts</h3><p>The Ministry reports cases by state. District figures are shared out from the state total using population, weather and where outbreaks are. They show where to look first.</p></div>
+        <div class="panel pad"><span class="tiers"><i class="t-Low"></i><i class="t-Moderate"></i><i class="t-High"></i><i class="t-Very"></i></span><h3 data-i18n="how.1.t"></h3><p data-i18n-html="how.1.p"></p></div>
+        <div class="panel pad"><span class="big-n">217</span><h3 data-i18n="how.2.t"></h3><p data-i18n="how.2.p"></p></div>
+        <div class="panel pad"><span class="big-n">~</span><h3 data-i18n="how.3.t"></h3><p data-i18n="how.3.p"></p></div>
       </div>
     </section>
   </div>
@@ -100,23 +104,23 @@
   <!-- ============ MAP: explore ============ -->
   <div class="tab" id="tab-map" hidden>
     <section>
-      <div class="head"><h2>District map</h2><p>Click any district for the reasons behind its estimate and who is most exposed. Scroll or pinch to zoom.</p></div>
+      <div class="head"><h2 data-i18n="map.h"></h2><p data-i18n="map.p"></p></div>
       <div class="work">
         <div class="panel">
           <div class="controls">
-            <label for="layer">Colour by
+            <label for="layer"><span data-i18n="map.colour"></span>
               <select id="layer"></select>
             </label>
-            <div class="seg" role="group" aria-label="Zoom to">
-              <button type="button" id="z-all" aria-pressed="true">Malaysia</button>
-              <button type="button" id="z-pen" aria-pressed="false">Peninsular</button>
-              <button type="button" id="z-bor" aria-pressed="false">Borneo</button>
+            <div class="seg" role="group" data-i18n-aria="map.zoom.aria">
+              <button type="button" id="z-all" aria-pressed="true" data-i18n="map.all"></button>
+              <button type="button" id="z-pen" aria-pressed="false" data-i18n="map.pen"></button>
+              <button type="button" id="z-bor" aria-pressed="false" data-i18n="map.bor"></button>
             </div>
-            <label class="chk" for="ov-ob"><input type="checkbox" id="ov-ob" checked> Active outbreaks</label>
-            <label class="chk" for="ov-hs"><input type="checkbox" id="ov-hs" checked> Hotspots (over 30 days)</label>
+            <label class="chk" for="ov-ob"><input type="checkbox" id="ov-ob" checked> <span data-i18n="map.ob"></span></label>
+            <label class="chk" for="ov-hs"><input type="checkbox" id="ov-hs" checked> <span data-i18n="map.hs"></span></label>
           </div>
           <p class="layer-desc" id="layer-desc"></p>
-          <div class="mapbox"><svg id="map" role="img" aria-label="Choropleth map of Malaysian districts"></svg></div>
+          <div class="mapbox"><svg id="map" role="img" data-i18n-aria="map.aria"></svg></div>
           <div class="legend" id="legend"></div>
         </div>
         <aside class="panel side" id="side" aria-live="polite"></aside>
@@ -127,18 +131,18 @@
   <!-- ============ INSPECTION: field teams ============ -->
   <div class="tab" id="tab-inspect" hidden>
     <section>
-      <div class="head"><h2>Inspection queue</h2><p>Places where many people gather or water collects, ranked so teams can start with the most urgent.</p></div>
+      <div class="head"><h2 data-i18n="ins.h"></h2><p data-i18n="ins.p"></p></div>
       <p class="caution" id="caution"></p>
       <div class="score-how" id="score-how"></div>
       <div class="panel">
         <div class="controls">
-          <div class="seg" role="group" aria-label="Site type" id="kind">
-            <button type="button" data-k="all" aria-pressed="true">All sites</button>
-            <button type="button" data-k="school" aria-pressed="false">Schools</button>
-            <button type="button" data-k="kindergarten" aria-pressed="false">Kindergartens</button>
-            <button type="button" data-k="construction" aria-pressed="false">Construction</button>
+          <div class="seg" role="group" data-i18n-aria="ins.type.aria" id="kind">
+            <button type="button" data-k="all" aria-pressed="true" data-i18n="ins.all"></button>
+            <button type="button" data-k="school" aria-pressed="false" data-i18n="ins.school"></button>
+            <button type="button" data-k="kindergarten" aria-pressed="false" data-i18n="ins.kg"></button>
+            <button type="button" data-k="construction" aria-pressed="false" data-i18n="ins.con"></button>
           </div>
-          <label for="qstate">State <select id="qstate"></select></label>
+          <label for="qstate"><span data-i18n="ins.state"></span> <select id="qstate"></select></label>
           <span class="muted" id="q-note"></span>
         </div>
         <div class="scroll" style="max-height:560px;overflow-y:auto"><table id="queue"></table></div>
@@ -149,25 +153,25 @@
   <!-- ============ EVIDENCE: analysts ============ -->
   <div class="tab" id="tab-evidence" hidden>
     <section>
-      <div class="head"><h2>What actually predicts dengue</h2><p>Each group of factors is added to the model and scored only on years it has never seen. A factor earns its place by lowering forecast error, not by looking correlated.</p></div>
+      <div class="head"><h2 data-i18n="ev.h"></h2><p data-i18n="ev.p"></p></div>
       <div class="take" id="takeaways"></div>
       <div class="grid2">
-        <div class="panel pad"><div class="card-h"><h3>State forecasts, one month ahead</h3><p id="abl-sub"></p></div><div class="bars" id="abl"></div><p class="read" id="abl-read"></p></div>
-        <div class="panel pad"><div class="card-h"><h3>National forecasts, 1 to 4 weeks ahead</h3><p>Skill against "same as the latest week". Above zero beats that baseline. Tested on 2016 to 2022.</p></div><div id="hz"></div><div class="lg" id="hz-lg"></div><p class="read" id="hz-read"></p></div>
-        <div class="panel pad"><div class="card-h"><h3>When weather shows up in cases</h3><p>Correlation between a weather anomaly and national cases that many weeks later, after removing season and year.</p></div><div class="scroll"><table class="heat" id="lagw"></table></div><p class="read">Rain peaks at 5 to 7 weeks, matching the mosquito life cycle plus incubation. Every link is weak.</p></div>
-        <div class="panel pad"><div class="card-h"><h3>Weather effects once recent cases are known</h3><p>Change in incidence per one standard deviation of weather, one to three months earlier.</p></div><div id="irr"></div><p class="read">Lines crossing 1.0 cannot be told apart from no effect. Warm spells the month before is the clearest signal.</p></div>
+        <div class="panel pad"><div class="card-h"><h3 data-i18n="ev.abl.t"></h3><p id="abl-sub"></p></div><div class="bars" id="abl"></div><p class="read" id="abl-read"></p></div>
+        <div class="panel pad"><div class="card-h"><h3 data-i18n="ev.hz.t"></h3><p data-i18n="ev.hz.p"></p></div><div id="hz"></div><div class="lg" id="hz-lg"></div><p class="read" id="hz-read"></p></div>
+        <div class="panel pad"><div class="card-h"><h3 data-i18n="ev.lag.t"></h3><p data-i18n="ev.lag.p"></p></div><div class="scroll"><table class="heat" id="lagw"></table></div><p class="read" data-i18n="ev.lag.read"></p></div>
+        <div class="panel pad"><div class="card-h"><h3 data-i18n="ev.irr.t"></h3><p data-i18n="ev.irr.p"></p></div><div id="irr"></div><p class="read" data-i18n="ev.irr.read"></p></div>
       </div>
     </section>
     <section>
-      <div class="head"><h2>Forecast track record</h2><p>National weekly cases against the forecast made two weeks earlier. The forecast starts in 2016; earlier years were used for training.</p></div>
+      <div class="head"><h2 data-i18n="ev.bt.h"></h2><p data-i18n="ev.bt.p"></p></div>
       <div class="panel pad"><div class="lg" id="bt-lg"></div><div id="bt"></div></div>
     </section>
     <section>
-      <div class="head"><h2>Spatial structure</h2></div>
+      <div class="head"><h2 data-i18n="ev.sp.h"></h2></div>
       <div class="panel pad" id="spatial"></div>
     </section>
     <section>
-      <div class="head"><h2>State table</h2><p>Observed figures from the daily bulletin, which every district estimate is anchored to.</p></div>
+      <div class="head"><h2 data-i18n="ev.tbl.h"></h2><p data-i18n="ev.tbl.p"></p></div>
       <div class="panel scroll"><table id="regions"></table></div>
     </section>
   </div>
@@ -175,29 +179,30 @@
   <!-- ============ ABOUT: sources, method, limits ============ -->
   <div class="tab" id="tab-about" hidden>
     <section>
-      <div class="head"><h2>How the estimate is made</h2></div>
+      <div class="head"><h2 data-i18n="ab.steps.h"></h2></div>
       <ol class="steps" id="steps"></ol>
     </section>
     <section>
-      <div class="head"><h2>Terms in plain words</h2></div>
+      <div class="head"><h2 data-i18n="ab.gloss.h"></h2></div>
       <dl class="gloss" id="gloss"></dl>
     </section>
     <section>
-      <div class="head"><h2>Limits of this version</h2><p>Read these before acting on a number.</p></div>
+      <div class="head"><h2 data-i18n="ab.lim.h"></h2><p data-i18n="ab.lim.p"></p></div>
       <div class="notes" id="notes"></div>
     </section>
     <section>
-      <div class="head"><h2>Data sources</h2><p>Every source is open and refreshed by the scheduled pipeline run.</p></div>
+      <div class="head"><h2 data-i18n="ab.src.h"></h2><p data-i18n="ab.src.p"></p></div>
       <div class="panel scroll"><table id="sources"></table></div>
     </section>
   </div>
 
 </main>
-<footer class="wrap">Open data from the Ministry of Health Malaysia and MYSA (iDengue), OpenDengue, NASA POWER, Open-Meteo, DOSM, NOAA and OpenStreetMap contributors. A planning aid, not an official forecast. Built <span id="m-gen"></span>.</footer>
+<footer class="wrap" id="foot"></footer>
 <div class="tip" id="tip" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script src="data/bundle.js"></script>
+<script src="i18n.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

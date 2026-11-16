@@ -6,8 +6,9 @@ DATA = ROOT / "data"
 CACHE = DATA / "cache"        # re-downloadable, git-ignored
 FEED = DATA / "feed"          # append-only live snapshots, committed (this is the history we build ourselves)
 PROCESSED = DATA / "processed"
+REFERENCE = DATA / "reference"  # small committed snapshots (OSM sites, geocode cache) so CI does not depend on flaky services
 WEB_DATA = ROOT / "web" / "data"
-for _p in (CACHE, FEED, PROCESSED, WEB_DATA):
+for _p in (CACHE, FEED, PROCESSED, REFERENCE, WEB_DATA):
     _p.mkdir(parents=True, exist_ok=True)
 
 UA = {"User-Agent": "dengue-early-warning-research/0.1 (open-data pipeline)"}

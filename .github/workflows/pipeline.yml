@@ -31,12 +31,13 @@ jobs:
           key: dengue-cache-${{ github.run_id }}
           restore-keys: dengue-cache-
       - run: pytest -q
-      - run: python -m pipeline.run
+      # --osm-cached: use the committed OSM snapshot in data/reference/osm; the monthly refresh-osm workflow updates it
+      - run: python -m pipeline.run --osm-cached
       - run: python -m pipeline.build_web
       - name: Commit feed and dashboard data
         run: |
           git config user.name "dengue-pipeline"
           git config user.email "actions@users.noreply.github.com"
-          git add data/feed data/processed web/data web/index.html
+          git add data/feed data/processed data/reference web/data web/index.html
           git diff --cached --quiet || git commit -m "data: daily refresh $(date -u +%F)"
           git push

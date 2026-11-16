@@ -303,6 +303,9 @@ button.row:hover { background: var(--surface-2); }
 .near { list-style: none; padding-left: 0 !important; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
 .near li { display: flex; flex-wrap: wrap; gap: 4px 10px; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 3px; }
 #map .pinr { fill: color-mix(in srgb, var(--accent) 14%, transparent); stroke: var(--accent); stroke-width: 2; stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.lang { margin-left: 4px; }
+.lang button { padding: 4px 9px; font-weight: 600; font-size: 12px; }
+.bar .meta { align-items: center; }
 .side header .row2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .caution { border: 1px solid var(--line); border-left: 5px solid var(--s2); border-radius: 10px; background: color-mix(in srgb, var(--s2) 8%, var(--surface)); padding: 10px 14px; font-size: 13.5px; color: var(--ink-2); max-width: 90ch; }
 .caution b { color: var(--ink); }
