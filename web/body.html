@@ -1,105 +1,187 @@
 <div class="bar"><div class="wrap">
-  <div class="brand">
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="var(--accent)"/><path d="M13 5.5c3 4 4.6 6.3 4.6 8.6a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-4.6 4.6-8.6z" fill="var(--accent-ink)"/></svg>
-    Dengue Buster
+  <div class="top">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="12" fill="var(--accent)"/><path d="M13 5.5c3 4 4.6 6.3 4.6 8.6a4.6 4.6 0 0 1-9.2 0c0-2.3 1.6-4.6 4.6-8.6z" fill="var(--accent-ink)"/></svg>
+      Dengue Buster
+    </div>
+    <div class="meta">
+      <span><span class="dot"></span>Cases reported <b id="m-snap"></b></span>
+      <span class="hide-s">Outlook <b id="m-win"></b></span>
+    </div>
   </div>
-  <div class="meta">
-    <span><span class="dot"></span>Cases reported <b id="m-snap"></b></span>
-    <span>Outlook window <b id="m-win"></b></span>
-    <span>Built <b id="m-gen"></b></span>
-  </div>
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button type="button" data-tab="today">Today</button>
+    <button type="button" data-tab="map">Map</button>
+    <button type="button" data-tab="inspect">Inspection</button>
+    <button type="button" data-tab="evidence">Evidence</button>
+    <button type="button" data-tab="about">About the data</button>
+  </nav>
 </div></div>
 
 <main class="wrap">
-  <section aria-label="Headline figures">
-    <div class="kpis" id="kpis"></div>
-  </section>
 
-  <section>
-    <div class="head">
-      <h2>District outlook, next 14 days</h2>
-      <p>Expected dengue cases per district, downscaled from state reports. Select a district to see why it ranks where it does and who is most exposed.</p>
+  <!-- ============ TODAY: for everyone ============ -->
+  <div class="tab" id="tab-today">
+    <section class="hero">
+      <div class="drops" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+      <div class="hero-in">
+        <span class="eyebrow" id="h-eyebrow"></span>
+        <h1 id="h1"></h1>
+        <p class="lead" id="hsub"></p>
+        <form class="find" id="find-form" autocomplete="off">
+          <label for="find">Where are you? Type an address, area or landmark</label>
+          <div class="find-row">
+            <input id="find" type="search" list="dlist" placeholder="e.g. Taman Desa, Kuala Lumpur, or SMK Bukit Jalil" enterkeyhint="search">
+            <button type="submit" class="btn primary">Check my surroundings</button>
+            <button type="button" class="btn" id="locate">Use my location</button>
+          </div>
+          <datalist id="dlist"></datalist>
+          <p class="fine" id="find-msg" aria-live="polite"></p>
+          <div class="cands" id="cands"></div>
+          <p class="fine muted">The text you type is sent to the Photon (OpenStreetMap) geocoder to find coordinates. This page does not store it. "Use my location" stays in your browser.</p>
+        </form>
+        <div id="found" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="aud" aria-label="Choose your view">
+      <button type="button" class="aud-c" data-go="find"><b>I live or work here</b><span>See if your district is at risk and what helps.</span></button>
+      <button type="button" class="aud-c" data-go="inspect"><b>I plan field work</b><span>Schools, kindergartens and building sites to visit first.</span></button>
+      <button type="button" class="aud-c" data-go="evidence"><b>I analyse the data</b><span>Which factors predict cases, and how well.</span></button>
+    </section>
+
+    <section>
+      <div class="head"><h2>Right now</h2><p>The latest national figures, updated every day.</p></div>
+      <div class="kpis" id="kpis"></div>
+    </section>
+
+    <div class="grid2 top-grid">
+      <section>
+        <div class="head"><h2>Where risk is highest</h2><p>Expected cases per 100,000 residents over the next 2 weeks. Select a district to open it on the map.</p></div>
+        <div class="panel pad"><div class="rows" id="topd"></div></div>
+      </section>
+      <section>
+        <div class="head"><h2>State by state</h2>
+          <div class="seg" role="group" aria-label="Measure" id="st-metric">
+            <button type="button" data-m="inc" aria-pressed="true">Per 100,000 people</button>
+            <button type="button" data-m="cum" aria-pressed="false">Total cases</button>
+          </div>
+        </div>
+        <div class="panel pad"><div class="rows" id="states"></div><p class="muted foot" id="st-note"></p></div>
+      </section>
     </div>
-    <div class="work">
+
+    <section>
+      <div class="head"><h2>Who acts on this</h2><p>One shared forecast, different decisions. Each row shows what this page gives that group today, and what is still missing.</p></div>
+      <div class="panel scroll"><table id="roles"></table></div>
+      <p class="fine muted" id="roles-note"></p>
+    </section>
+
+    <section>
+      <div class="head"><h2>How to read this page</h2></div>
+      <div class="how">
+        <div class="panel pad"><span class="tiers"><i class="t-Low"></i><i class="t-Moderate"></i><i class="t-High"></i><i class="t-Very"></i></span><h3>Risk tiers</h3><p>Each district gets a tier from how many cases are expected for every 100,000 residents in the next 14 days. <b>Low</b> is under 3, <b>Very high</b> is 16 or more.</p></div>
+        <div class="panel pad"><span class="big-n">217</span><h3>Expected cases</h3><p>A best estimate for the district, shown with a likely range. Small districts swing a lot, so look at the tier and the range, not one exact number.</p></div>
+        <div class="panel pad"><span class="big-n">~</span><h3>Estimates, not counts</h3><p>The Ministry reports cases by state. District figures are shared out from the state total using population, weather and where outbreaks are. They show where to look first.</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ MAP: explore ============ -->
+  <div class="tab" id="tab-map" hidden>
+    <section>
+      <div class="head"><h2>District map</h2><p>Click any district for the reasons behind its estimate and who is most exposed. Scroll or pinch to zoom.</p></div>
+      <div class="work">
+        <div class="panel">
+          <div class="controls">
+            <label for="layer">Colour by
+              <select id="layer"></select>
+            </label>
+            <div class="seg" role="group" aria-label="Zoom to">
+              <button type="button" id="z-all" aria-pressed="true">Malaysia</button>
+              <button type="button" id="z-pen" aria-pressed="false">Peninsular</button>
+              <button type="button" id="z-bor" aria-pressed="false">Borneo</button>
+            </div>
+            <label class="chk" for="ov-ob"><input type="checkbox" id="ov-ob" checked> Active outbreaks</label>
+            <label class="chk" for="ov-hs"><input type="checkbox" id="ov-hs" checked> Hotspots (over 30 days)</label>
+          </div>
+          <p class="layer-desc" id="layer-desc"></p>
+          <div class="mapbox"><svg id="map" role="img" aria-label="Choropleth map of Malaysian districts"></svg></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <aside class="panel side" id="side" aria-live="polite"></aside>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ INSPECTION: field teams ============ -->
+  <div class="tab" id="tab-inspect" hidden>
+    <section>
+      <div class="head"><h2>Inspection queue</h2><p>Places where many people gather or water collects, ranked so teams can start with the most urgent.</p></div>
+      <p class="caution" id="caution"></p>
+      <div class="score-how" id="score-how"></div>
       <div class="panel">
         <div class="controls">
-          <label for="layer">Colour by
-            <select id="layer"></select>
-          </label>
-          <div class="seg" role="group" aria-label="Zoom to">
-            <button type="button" id="z-all" aria-pressed="true">Malaysia</button>
-            <button type="button" id="z-pen" aria-pressed="false">Peninsular</button>
-            <button type="button" id="z-bor" aria-pressed="false">Borneo</button>
+          <div class="seg" role="group" aria-label="Site type" id="kind">
+            <button type="button" data-k="all" aria-pressed="true">All sites</button>
+            <button type="button" data-k="school" aria-pressed="false">Schools</button>
+            <button type="button" data-k="kindergarten" aria-pressed="false">Kindergartens</button>
+            <button type="button" data-k="construction" aria-pressed="false">Construction</button>
           </div>
-          <label class="chk" for="ov-ob"><input type="checkbox" id="ov-ob" checked> Active outbreaks</label>
-          <label class="chk" for="ov-hs"><input type="checkbox" id="ov-hs" checked> Hotspots (&gt;30 days)</label>
+          <label for="qstate">State <select id="qstate"></select></label>
+          <span class="muted" id="q-note"></span>
         </div>
-        <div class="mapbox"><svg id="map" role="img" aria-label="Choropleth map of Malaysian districts"></svg></div>
-        <div class="legend" id="legend"></div>
+        <div class="scroll" style="max-height:560px;overflow-y:auto"><table id="queue"></table></div>
       </div>
-      <aside class="panel side" id="side" aria-live="polite"></aside>
-    </div>
-    <div class="panel pad" id="spatial"></div>
-  </section>
+    </section>
+  </div>
 
-  <section>
-    <div class="head">
-      <h2>States today</h2>
-      <p>Straight from the iDengue daily bulletin. These are the observed numbers every district estimate is anchored to.</p>
-    </div>
-    <div class="panel scroll"><table id="regions"></table></div>
-  </section>
-
-  <section>
-    <div class="head">
-      <h2>Inspection queue</h2>
-      <p>Schools, kindergartens and mapped construction sites ranked by district risk, recent rain and distance to an active outbreak locality.</p>
-    </div>
-    <div class="panel">
-      <div class="controls">
-        <div class="seg" role="group" aria-label="Site type" id="kind">
-          <button type="button" data-k="all" aria-pressed="true">All sites</button>
-          <button type="button" data-k="school" aria-pressed="false">Schools</button>
-          <button type="button" data-k="kindergarten" aria-pressed="false">Kindergartens</button>
-          <button type="button" data-k="construction" aria-pressed="false">Construction</button>
-        </div>
-        <span class="muted" id="q-note"></span>
+  <!-- ============ EVIDENCE: analysts ============ -->
+  <div class="tab" id="tab-evidence" hidden>
+    <section>
+      <div class="head"><h2>What actually predicts dengue</h2><p>Each group of factors is added to the model and scored only on years it has never seen. A factor earns its place by lowering forecast error, not by looking correlated.</p></div>
+      <div class="take" id="takeaways"></div>
+      <div class="grid2">
+        <div class="panel pad"><div class="card-h"><h3>State forecasts, one month ahead</h3><p id="abl-sub"></p></div><div class="bars" id="abl"></div><p class="read" id="abl-read"></p></div>
+        <div class="panel pad"><div class="card-h"><h3>National forecasts, 1 to 4 weeks ahead</h3><p>Skill against "same as the latest week". Above zero beats that baseline. Tested on 2016 to 2022.</p></div><div id="hz"></div><div class="lg" id="hz-lg"></div><p class="read" id="hz-read"></p></div>
+        <div class="panel pad"><div class="card-h"><h3>When weather shows up in cases</h3><p>Correlation between a weather anomaly and national cases that many weeks later, after removing season and year.</p></div><div class="scroll"><table class="heat" id="lagw"></table></div><p class="read">Rain peaks at 5 to 7 weeks, matching the mosquito life cycle plus incubation. Every link is weak.</p></div>
+        <div class="panel pad"><div class="card-h"><h3>Weather effects once recent cases are known</h3><p>Change in incidence per one standard deviation of weather, one to three months earlier.</p></div><div id="irr"></div><p class="read">Lines crossing 1.0 cannot be told apart from no effect. Warm spells the month before is the clearest signal.</p></div>
       </div>
-      <div class="scroll" style="max-height:440px;overflow-y:auto"><table id="queue"></table></div>
-    </div>
-  </section>
+    </section>
+    <section>
+      <div class="head"><h2>Forecast track record</h2><p>National weekly cases against the forecast made two weeks earlier. The forecast starts in 2016; earlier years were used for training.</p></div>
+      <div class="panel pad"><div class="lg" id="bt-lg"></div><div id="bt"></div></div>
+    </section>
+    <section>
+      <div class="head"><h2>Spatial structure</h2></div>
+      <div class="panel pad" id="spatial"></div>
+    </section>
+    <section>
+      <div class="head"><h2>State table</h2><p>Observed figures from the daily bulletin, which every district estimate is anchored to.</p></div>
+      <div class="panel scroll"><table id="regions"></table></div>
+    </section>
+  </div>
 
-  <section>
-    <div class="head">
-      <h2>Which factors actually predict dengue</h2>
-      <p>Each factor group is added to the model and scored only on years it has never seen. A factor earns its place by lowering forecast error, not by correlating with cases.</p>
-    </div>
-    <p class="finding" id="finding"></p>
-    <div class="grid2">
-      <div class="panel pad"><div class="card-h"><h3>State forecasts, one month ahead</h3><p id="abl-sub"></p></div><div class="bars" id="abl"></div></div>
-      <div class="panel pad"><div class="card-h"><h3>National forecasts, one to four weeks ahead</h3><p>Skill against "same as the latest week". Above zero beats that baseline. Tested on 2016 to 2022.</p></div><div id="hz"></div><div class="lg" id="hz-lg"></div></div>
-      <div class="panel pad"><div class="card-h"><h3>When weather shows up in cases</h3><p>Correlation between a weather anomaly and national cases that many weeks later, after removing season and year. Rain peaks at 5 to 7 weeks, matching the mosquito and incubation cycle, but every link is weak.</p></div><div class="scroll"><table class="heat" id="lagw"></table></div></div>
-      <div class="panel pad"><div class="card-h"><h3>Weather effects once recent cases are known</h3><p>Change in incidence per one standard deviation of weather anomaly one, two and three months earlier. Bars crossing 1.0 are not distinguishable from no effect.</p></div><div id="irr"></div></div>
-    </div>
-  </section>
+  <!-- ============ ABOUT: sources, method, limits ============ -->
+  <div class="tab" id="tab-about" hidden>
+    <section>
+      <div class="head"><h2>How the estimate is made</h2></div>
+      <ol class="steps" id="steps"></ol>
+    </section>
+    <section>
+      <div class="head"><h2>Terms in plain words</h2></div>
+      <dl class="gloss" id="gloss"></dl>
+    </section>
+    <section>
+      <div class="head"><h2>Limits of this version</h2><p>Read these before acting on a number.</p></div>
+      <div class="notes" id="notes"></div>
+    </section>
+    <section>
+      <div class="head"><h2>Data sources</h2><p>Every source is open and refreshed by the scheduled pipeline run.</p></div>
+      <div class="panel scroll"><table id="sources"></table></div>
+    </section>
+  </div>
 
-  <section>
-    <div class="head">
-      <h2>Forecast track record</h2>
-      <p>National weekly cases against the forecast made two weeks earlier. The forecast line starts in 2016; earlier years were training data.</p>
-    </div>
-    <div class="panel pad"><div class="lg" id="bt-lg"></div><div id="bt"></div></div>
-  </section>
-
-  <section>
-    <div class="head"><h2>Data feed</h2><p>Every source is open and refreshed by the scheduled pipeline run.</p></div>
-    <div class="panel scroll"><table id="sources"></table></div>
-  </section>
-
-  <section>
-    <div class="head"><h2>Limits of this version</h2></div>
-    <div class="notes" id="notes"></div>
-  </section>
 </main>
-<footer class="wrap">Open data from the Ministry of Health Malaysia and MYSA (iDengue), OpenDengue, NASA POWER, Open-Meteo, DOSM, NOAA and OpenStreetMap contributors. A planning aid, not an official forecast.</footer>
+<footer class="wrap">Open data from the Ministry of Health Malaysia and MYSA (iDengue), OpenDengue, NASA POWER, Open-Meteo, DOSM, NOAA and OpenStreetMap contributors. A planning aid, not an official forecast. Built <span id="m-gen"></span>.</footer>
 <div class="tip" id="tip" hidden></div>
