@@ -30,7 +30,7 @@ jobs:
           path: data/cache
           key: dengue-cache-${{ github.run_id }}
           restore-keys: dengue-cache-
-      - run: pytest -q
+      - run: python -m pytest -q
       # --osm-cached: use the committed OSM snapshot in data/reference/osm; the monthly refresh-osm workflow updates it
       - run: python -m pipeline.run --osm-cached
       - run: python -m pipeline.build_web
