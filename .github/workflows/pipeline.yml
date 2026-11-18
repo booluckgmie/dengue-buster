@@ -4,7 +4,9 @@ name: Daily dengue pipeline
 # Each run appends to data/feed/, rebuilds the outlook and commits the refreshed dashboard bundle.
 on:
   schedule:
-    - cron: "17 1 * * *"   # 09:17 Malaysia time, after the daily iDengue update
+    # GitHub often starts scheduled runs hours late, and iDengue posts the day's figures at no fixed hour,
+    # so run three times a day. Reruns on the same reporting date are idempotent and commit nothing new.
+    - cron: "17 1,7,13 * * *"   # 09:17, 15:17 and 21:17 Malaysia time
   workflow_dispatch:
 
 permissions:
@@ -40,4 +42,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/feed data/processed data/reference web/data web/index.html
           git diff --cached --quiet || git commit -m "data: daily refresh $(date -u +%F)"
+          git pull --rebase origin "$GITHUB_REF_NAME"
           git push
