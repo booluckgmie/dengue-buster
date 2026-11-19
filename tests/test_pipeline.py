@@ -83,3 +83,18 @@ def test_district_outlook_conserves_regional_cases_and_allocates_by_age():
 
 def test_tiers():
     assert [outlook.tier(v) for v in (0, 2.9, 3, 8, 15.9, 16, 99)] == ["Low", "Low", "Moderate", "High", "High", "Very high", "Very high"]
+
+
+def test_append_never_lowers_a_counter_for_the_same_date(tmp_path):
+    """iDengue shows daily cases as 0 just after midnight while still labelled with the old date."""
+    import pandas as pd
+    path = tmp_path / "state.csv"
+    keys = ["date", "region"]
+    first = pd.DataFrame([{"date": "2026-11-17", "region": "Johor", "daily_cases": 49, "cumulative_cases": 13697}])
+    later = pd.DataFrame([{"date": "2026-11-17", "region": "Johor", "daily_cases": 0, "cumulative_cases": 13697}])
+    idg._append(path, first, keys, grow=("daily_cases", "cumulative_cases"))
+    out = idg._append(path, later, keys, grow=("daily_cases", "cumulative_cases"))
+    assert len(out) == 1 and int(out.daily_cases.iloc[0]) == 49
+    bigger = pd.DataFrame([{"date": "2026-11-17", "region": "Johor", "daily_cases": 51, "cumulative_cases": 13699}])
+    out = idg._append(path, bigger, keys, grow=("daily_cases", "cumulative_cases"))
+    assert int(out.daily_cases.iloc[0]) == 51 and int(out.cumulative_cases.iloc[0]) == 13699

@@ -139,10 +139,18 @@ def geocode(localities: pd.DataFrame, budget: int = 400) -> pd.DataFrame:
     return localities.assign(lat=lat, lon=lon)
 
 
-def _append(path, df, keys):
+def _append(path, df, keys, grow=()):
+    """Append a snapshot, one row per key. `grow` lists counters that only increase within a reporting date:
+    iDengue can show the daily column as 0 just after midnight while still labelled with the previous date, so a
+    later snapshot must never overwrite a larger figure already saved for the same date."""
     if path.exists():
         df = pd.concat([pd.read_csv(path), df], ignore_index=True)
-    df = df.drop_duplicates(keys, keep="last").sort_values(keys)
+    grow = [c for c in grow if c in df.columns]
+    peak = df.groupby(keys, dropna=False)[grow].transform("max") if grow else None
+    df = df.drop_duplicates(keys, keep="last")
+    if grow:
+        df[grow] = peak.loc[df.index, grow]
+    df = df.sort_values(keys)
     df.to_csv(path, index=False)
     return df
 
@@ -151,7 +159,7 @@ def run(do_geocode: bool = True) -> dict:
     base = URLS["idengue"]
     state = parse_index(get(base).text)
     snap = state.date.iloc[0]
-    _append(FEED / "idengue_state_daily.csv", state, ["date", "region"])
+    _append(FEED / "idengue_state_daily.csv", state, ["date", "region"], grow=("daily_cases", "cumulative_cases"))
 
     hot = parse_hotspots(get(base + "hotspotutama.php").text)
     hot.insert(0, "snapshot_date", snap)

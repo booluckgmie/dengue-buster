@@ -4,9 +4,10 @@ name: Daily dengue pipeline
 # Each run appends to data/feed/, rebuilds the outlook and commits the refreshed dashboard bundle.
 on:
   schedule:
-    # GitHub often starts scheduled runs hours late, and iDengue posts the day's figures at no fixed hour,
-    # so run three times a day. Reruns on the same reporting date are idempotent and commit nothing new.
-    - cron: "17 1,7,13 * * *"   # 09:17, 15:17 and 21:17 Malaysia time
+    # GitHub drops or delays scheduled runs (the 18 and 19 Nov 01:17 UTC slots never fired), and iDengue posts
+    # the day's figures at no fixed hour. So try every three hours, on an off-peak minute. Reruns on the same
+    # reporting date add nothing, and a snapshot never lowers a figure already saved for that date.
+    - cron: "47 */3 * * *"   # 00:47, 03:47, ... UTC = 08:47, 11:47, ... Malaysia time
   workflow_dispatch:
 
 permissions:
