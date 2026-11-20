@@ -98,3 +98,17 @@ def test_append_never_lowers_a_counter_for_the_same_date(tmp_path):
     bigger = pd.DataFrame([{"date": "2026-11-17", "region": "Johor", "daily_cases": 51, "cumulative_cases": 13699}])
     out = idg._append(path, bigger, keys, grow=("daily_cases", "cumulative_cases"))
     assert int(out.daily_cases.iloc[0]) == 51 and int(out.cumulative_cases.iloc[0]) == 13699
+
+
+def test_who_update_text_gives_two_weeks_for_malaysia():
+    import datetime as dt
+    from pipeline import ingest_who as W
+    text = ("Malaysia (Monthly update)\nIn epidemiological week 18 of 2025 (17 April to 3 May 2025), 1 205 new dengue cases were reported in Malaysia, "
+            "an increase from 1 127 cases in week 17 (Figure 3). Cumulatively, 21 679 cases have been reported in 2025.\nSingapore\nIn week 20 ...")
+    rows = W.parse_text(text, dt.date(2025, 5, 29))
+    assert [(r["week_end"], r["cases"]) for r in rows] == [("2025-05-03", 1205), ("2025-04-26", 1127)]
+    assert rows[0]["cum_ytd"] == 21679
+    # a carried-over paragraph is still read; a page without a Malaysia sentence gives nothing
+    old = "Malaysia There was no update in this reporting period. In epidemiological week 49 (30 November to 6 December 2025), 974 new dengue cases, were reported in Malaysia, an increase from 822 cases in week 48 (Figure 5). Singapore"
+    assert W.parse_text(old, dt.date(2026, 2, 5))[0]["cases"] == 974
+    assert W.parse_text("Singapore only", dt.date(2025, 3, 6)) == []

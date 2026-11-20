@@ -97,6 +97,15 @@ def opendengue():
     return sm.sort_values(["region", "month"]).reset_index(drop=True), nw, nm.sort_values("month").reset_index(drop=True)
 
 
+def opendengue_annual() -> dict[int, int]:
+    """Yearly Malaysia totals (sum of the 15 state/territory rows) for years OpenDengue has no weekly or monthly series for."""
+    z = zipfile.ZipFile(io.BytesIO(cached_file("opendengue_wpro.zip", URLS["opendengue"], 60).read_bytes()))
+    d = pd.read_csv(z.open(z.namelist()[0]), low_memory=False)
+    d = d[(d.adm_0_name == "MALAYSIA") & (d.T_res == "Year") & (d.S_res == "Admin1") & (d.Year >= 2020)]
+    g = d.groupby("Year").agg(n=("dengue_total", "size"), total=("dengue_total", "sum"))
+    return {int(y): int(r.total) for y, r in g.iterrows() if r.n >= 15}        # only complete years
+
+
 def climate_indices() -> pd.DataFrame:
     """Monthly ENSO (ONI, NOAA CPC) and Indian Ocean Dipole (DMI, NOAA PSL)."""
     txt = cached_file("oni.txt", URLS["oni"], 20).read_text().split("\n")[1:]

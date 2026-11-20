@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from . import features as F
-from . import ingest_idengue, ingest_osm, ingest_static, ingest_weather, models, outlook, spatial
+from . import ingest_idengue, ingest_osm, ingest_static, ingest_weather, ingest_who, models, outlook, spatial
 from .config import FEED, HORIZON_DAYS, PROCESSED, REGIONS, WEB_DATA
 
 
@@ -41,6 +41,7 @@ def main(skip_live=False, skip_osm=False, osm_cached=False):
     dist = dist.merge(pop, on="id").merge(ingest_static.socioeconomic(dist), on="id")
     pop_ry = ingest_static.population_region_year()
     region_month, nat_week, nat_month = ingest_static.opendengue()
+    who_weeks = ingest_who.load()      # weekly points after OpenDengue's weekly series ends (committed file; refreshed by ingest_who)
     indices = ingest_static.climate_indices()
 
     if not skip_live:
@@ -283,6 +284,8 @@ def main(skip_live=False, skip_osm=False, osm_cached=False):
                     "links": int(W.sum() / 2)},
         "history": {"week": [str(w.date()) for w in nat_week.week], "cases": [int(v) for v in nat_week.cases],
                     "month2024": [int(v) for v in nat_month.cases],
+                    "year_avg": {str(y): [t, round(t / 52.0)] for y, t in ingest_static.opendengue_annual().items()},
+                    "who": {"end": [str(w.date()) for w in who_weeks.week_end], "cases": [int(v) for v in who_weeks.cases]},
                     "region_month": {r: {"start": str(g.month.min().date())[:7], "inc": [_r(v, 1) for v in g.inc]} for r, g in pm.groupby("region")}},
         "feed": {"date": list(natf.date), "daily": [int(v) for v in natf.daily_cases], "cum": [int(v) for v in natf.cumulative_cases]},
     }
