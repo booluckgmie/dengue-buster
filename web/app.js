@@ -262,6 +262,7 @@
     $("#states").innerHTML = rs.map((r, i) => `<div class="row" title="${esc(t("state.title", r.region, fmt(r.cum), fmt(r.today)))}"><span class="nm">${esc(clean(r.region).replace(" & Putrajaya", " + Putrajaya"))}<span>${t("state.today", r.today)}</span></span><span class="trk"><span class="gbar" style="--w:${(key(r) / mx) * 100}%;animation-delay:${i * 35}ms"></span></span><span class="v"><b>${stMetric === "inc" ? f1(r.inc_cum) : fmt(r.cum)}</b></span></div>`).join("");
     $("#st-note").textContent = t(stMetric === "inc" ? "state.note.inc" : "state.note.cum");
   }
+  $$("#tr-view button").forEach((b) => (b.onclick = () => { trView = b.dataset.v; renderTrend(); }));
   $$("#st-metric button").forEach((b) => (b.onclick = () => { stMetric = b.dataset.m; $$("#st-metric button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); renderStates(); }));
 
   const ROLES = [["today", "ok"], ["inspect", "part"], ["inspect", "part"], ["map", "part"], ["map", "ok"], ["about", "no"], ["map", "part"], ["evidence", "part"], ["evidence", "ok"]];
@@ -506,10 +507,63 @@
     if (o.zero) s.append("line").attr("class", "axis").attr("x1", m.l).attr("x2", Wc - m.r).attr("y1", y(0)).attr("y2", y(0));
     const ln = d3.line().defined((p) => p[1] != null).x((p) => x(p[0])).y((p) => y(p[1]));
     series.forEach((se) => { s.append("path").attr("d", ln(se.pts)).attr("fill", "none").attr("stroke", `var(${se.c})`).attr("stroke-width", 2).attr("stroke-linejoin", "round"); if (o.dots) se.pts.forEach((p) => s.append("circle").attr("cx", x(p[0])).attr("cy", y(p[1])).attr("r", 4.5).attr("fill", `var(${se.c})`).attr("stroke", "var(--surface)").attr("stroke-width", 2)); });
+    if (o.extra) o.extra(s, x, y);
     const hair = s.append("line").attr("class", "axis").attr("y1", m.t).attr("y2", Hc - m.b).attr("display", "none");
     s.append("rect").attr("x", m.l).attr("y", m.t).attr("width", Wc - m.l - m.r).attr("height", Hc - m.t - m.b).attr("fill", "transparent")
       .on("mousemove", (ev) => { const px = d3.pointer(ev)[0], xs = series[0].pts.map((p) => p[0]), i = d3.leastIndex(xs, (a) => Math.abs(x(a) - px)); hair.attr("display", null).attr("x1", x(xs[i])).attr("x2", x(xs[i])); showTip(o.tip(i), ev); })
       .on("mouseleave", () => { hair.attr("display", "none"); hideTip(); });
+  }
+  /* ================= CASE TREND (Today) ================= */
+  let trView = "now";
+  function renderTrend() {
+    const F = D.feed, el = "#tr", box = $(el);
+    if (!box || !F.date.length) return;
+    $$("#tr-view button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === trView)));
+    const exp = N.exp14 / 14, wk = D.meta.window, day = 864e5;
+    if (trView === "now") {
+      // live view: one bar per saved daily report, against the daily level the model expects for the next 2 weeks
+      const Wc = Math.max(300, Math.round(box.clientWidth || 640)), Hc = 300, m = { t: 22, r: 16, b: 30, l: 48 };
+      const dts = F.date.map((d) => new Date(d + "T00:00:00")), w0 = new Date(wk[0] + "T00:00:00"), w1 = new Date(wk[1] + "T00:00:00"), xe = new Date(+w1 + day);
+      const x = d3.scaleTime().domain([new Date(+dts[0] - day), xe]).range([m.l, Wc - m.r]);
+      const y = d3.scaleLinear().domain([0, Math.max(d3.max(F.daily), exp) * 1.2]).nice().range([Hc - m.b, m.t]);
+      const bw = Math.max(6, Math.min(34, (x(new Date(+dts[0] + day)) - x(dts[0])) * 0.7));
+      const s = d3.select(el).html("").append("svg").attr("class", "chart").attr("viewBox", `0 0 ${Wc} ${Hc}`);
+      y.ticks(5).forEach((tk) => { s.append("line").attr("class", "grid").attr("x1", m.l).attr("x2", Wc - m.r).attr("y1", y(tk)).attr("y2", y(tk)); s.append("text").attr("x", m.l - 8).attr("y", y(tk) + 4).attr("text-anchor", "end").text(fmt(tk)); });
+      const every = Math.max(1, Math.ceil((+xe - +dts[0]) / day / Math.max(3, Math.floor((Wc - m.l - m.r) / 70))));
+      d3.timeDay.range(dts[0], xe, every).forEach((d) => s.append("text").attr("x", x(d)).attr("y", Hc - 10).attr("text-anchor", "middle").text(dshort(d3.timeFormat("%Y-%m-%d")(d))));
+      s.append("rect").attr("x", x(w0)).attr("y", m.t).attr("width", x(xe) - x(w0)).attr("height", Hc - m.t - m.b).attr("fill", "var(--s2)").attr("opacity", 0.09);
+      s.append("line").attr("x1", x(w0)).attr("x2", x(xe)).attr("y1", y(exp)).attr("y2", y(exp)).attr("stroke", "var(--s2)").attr("stroke-width", 2).attr("stroke-dasharray", "6 5");
+      s.append("text").attr("x", x(xe) - 6).attr("y", y(exp) - 8).attr("text-anchor", "end").attr("fill", "var(--s2)").text(t("tr.now.exp", fmt(Math.round(exp))));
+      dts.forEach((d, i) => {
+        s.append("rect").attr("x", x(d) - bw / 2).attr("y", y(F.daily[i])).attr("width", bw).attr("height", y(0) - y(F.daily[i])).attr("rx", 3).attr("fill", "var(--s1)")
+          .on("mousemove", (ev) => showTip(`<b>${dfmt(F.date[i])}</b><br>${t("tr.now.new", fmt(F.daily[i]))}<br>${t("tr.now.cum", fmt(F.cum[i]))}`, ev)).on("mouseleave", hideTip);
+        s.append("text").attr("x", x(d)).attr("y", y(F.daily[i]) - 6).attr("text-anchor", "middle").attr("font-weight", 600).text(fmt(F.daily[i]));
+      });
+      $("#tr-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("tr.now.l1")}</span><span><i style="background:var(--s2)"></i>${t("tr.now.l2", dshort(wk[0]), dshort(wk[1]))}</span>`;
+      $("#tr-note").textContent = t("tr.now.note", dfmt(F.date[0]), F.date.length);
+      return;
+    }
+    // since 2011: weekly reported cases, the forecast made two weeks earlier, the 2024 months and today's rate
+    const Hh = D.history, B = M.backtest_week, pm = new Map(B.week.map((w, i) => [w, B.pred[i]])), tt = Hh.week.map((w) => new Date(w));
+    const act = tt.map((d, i) => [d, Hh.cases[i]]), pr = tt.map((d, i) => [d, pm.has(Hh.week[i]) ? pm.get(Hh.week[i]) : null]);
+    const mo = Hh.month2024.map((v, i) => { const a = new Date(2024, i, 1), b = new Date(2024, i + 1, 1); return [new Date(+a + (+b - +a) / 2), (v / ((+b - +a) / day)) * 7]; });
+    const k = Math.min(7, F.daily.length), nowV = (d3.sum(F.daily.slice(-k)) / k) * 7, nowD = new Date(F.date[F.date.length - 1] + "T00:00:00");
+    const end = new Date(nowD.getFullYear(), 11, 31), yrs = d3.range(2012, nowD.getFullYear() + 1, 2).map((yy) => new Date(yy, 0, 1));
+    const ymax = Math.max(d3.max(Hh.cases), d3.max(mo, (p) => p[1]), nowV) * 1.08, r2 = nw.find((r) => r.horizon === 2 && r.spec === B.spec), HH = 320;
+    lineChart(el, [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: HH, right: 22, x: d3.scaleTime().domain([tt[0], end]), y: d3.scaleLinear().domain([0, ymax]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v),
+      tip: (i) => `<b>${t("ev.bt.week", dfmt(Hh.week[i]))}</b><br>${t("ev.bt.rep", fmt(Hh.cases[i]))}` + (pr[i][1] != null ? `<br>${t("ev.bt.fc", fmt(pr[i][1]))}` : ""),
+      extra: (s, x, y) => {
+        const gx0 = x(tt[tt.length - 1]), gx1 = x(nowD);
+        s.append("rect").attr("x", gx0).attr("y", 12).attr("width", gx1 - gx0).attr("height", HH - 12 - 26).attr("fill", "var(--muted)").attr("opacity", 0.08);
+        s.append("text").attr("x", (gx0 + gx1) / 2).attr("y", 26).attr("text-anchor", "middle").attr("fill", "var(--muted)").text(t("tr.all.gap"));
+        s.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(mo)).attr("fill", "none").attr("stroke", "var(--s3)").attr("stroke-width", 2);
+        mo.forEach((p, i) => s.append("circle").attr("cx", x(p[0])).attr("cy", y(p[1])).attr("r", 3.5).attr("fill", "var(--s3)").attr("stroke", "var(--surface)").attr("stroke-width", 1.5)
+          .on("mousemove", (ev) => showTip(`<b>${new Date(2024, i, 1).toLocaleDateString(locale(), { month: "long", year: "numeric" })}</b><br>${t("tr.all.mtip", fmt(Hh.month2024[i]), fmt(Math.round(p[1])))}`, ev)).on("mouseleave", hideTip));
+        s.append("circle").attr("cx", x(nowD)).attr("cy", y(nowV)).attr("r", 5.5).attr("fill", "var(--critical)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
+          .on("mousemove", (ev) => showTip(`<b>${dfmt(F.date[F.date.length - 1])}</b><br>${t("tr.all.ntip", k, fmt(Math.round(nowV)))}`, ev)).on("mouseleave", hideTip);
+      } });
+    $("#tr-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("ev.bt.l1")}</span><span><i style="background:var(--s2)"></i>${t("ev.bt.l2", specName(B.spec).toLowerCase())}</span><span><i style="background:var(--s3)"></i>${t("tr.all.l3")}</span><span><i style="background:var(--critical)"></i>${t("tr.all.l4")}</span><span class="muted">${t("ev.bt.miss", fmt(Math.round(r2.mae)), r2.n)}</span>`;
+    $("#tr-note").textContent = t("tr.all.note");
   }
   function renderEvidence() {
     const base = rm[0].mae / (1 - rm[0].skill), mxm = Math.max(base, d3.max(rm, (r) => r.mae));
@@ -552,15 +606,6 @@
     });
     d3.select("#irr").append("div").attr("class", "lg").html(`<span><i style="background:var(--s1)"></i>${t("ev.irr.l1")}</span><span><i style="background:var(--muted)"></i>${t("ev.irr.l2")}</span>`);
 
-    // track record
-    const Hh = D.history, B = M.backtest_week, pm = new Map(B.week.map((w, i) => [w, B.pred[i]])), tt = Hh.week.map((w) => new Date(w));
-    const act = tt.map((d, i) => [d, Hh.cases[i]]), pr = tt.map((d, i) => [d, pm.has(Hh.week[i]) ? pm.get(Hh.week[i]) : null]);
-    const yrs = d3.range(tt[0].getFullYear() + 1, tt[tt.length - 1].getFullYear() + 1).map((y) => new Date(y, 0, 1));
-    lineChart("#bt", [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: 300, x: d3.scaleTime().domain([tt[0], tt[tt.length - 1]]), y: d3.scaleLinear().domain([0, d3.max(Hh.cases) * 1.05]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v),
-      tip: (i) => `<b>${t("ev.bt.week", dfmt(Hh.week[i]))}</b><br>${t("ev.bt.rep", fmt(Hh.cases[i]))}` + (pr[i][1] != null ? `<br>${t("ev.bt.fc", fmt(pr[i][1]))}` : "") });
-    const r2 = nw.find((r) => r.horizon === 2 && r.spec === B.spec);
-    $("#bt-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("ev.bt.l1")}</span><span><i style="background:var(--s2)"></i>${t("ev.bt.l2", specName(B.spec).toLowerCase())}</span><span class="muted">${t("ev.bt.miss", fmt(Math.round(r2.mae)), r2.n)}</span>`;
-
     // spatial + state table
     const S = D.spatial, L = S.lisa;
     $("#spatial").innerHTML = `<div class="notes"><p>${t("ev.sp.1", f2(S.risk.I), S.risk.p, L.HH || 0, L.LL || 0, f2(S.density.I), f2(S.suit.I))}</p><p>${t("ev.sp.2", S.links)}</p></div>`;
@@ -599,7 +644,7 @@
     $("#m-win").textContent = dshort(D.meta.window[0]) + " " + t("range.to") + " " + dshort(D.meta.window[1]);
     $("#foot").innerHTML = t("foot", esc(D.meta.generated));
     themeButton();
-    renderHero(); renderHeroMap(); renderKpis(); renderTop(); renderTierDist(); renderStates(); renderRoles(); renderFound();
+    renderHero(); renderHeroMap(); renderKpis(); renderTrend(); renderTop(); renderTierDist(); renderStates(); renderRoles(); renderFound();
     renderLayerSelect(); renderInspect(); renderEvidence(); renderAbout();
     gaz = null;
     if (mapReady) { recolor(); if (selected && byId.get(selected)) renderDistrict(byId.get(selected), selectedSites); else renderRank(); paths.attr("aria-label", (f) => { const d = byId.get(f.id); return `${d.district}, ${d.state}: ${tierName(d.tier)}`; }); }
@@ -611,7 +656,7 @@
   }
   $$(".lang button").forEach((b) => (b.onclick = () => setLang(b.dataset.lang)));
   function paint() {
-    themeButton(); renderEvidence(); recolor(); renderHeroMap(); renderTierDist();
+    themeButton(); renderEvidence(); renderTrend(); recolor(); renderHeroMap(); renderTierDist();
     $$("#topd .gbar").forEach((el, i) => el.style.setProperty("--c", tierColor(ranked[i].tier)));
   }
   let rz;
@@ -620,6 +665,7 @@
     rz = setTimeout(() => {
       if (mapReady && !$("#tab-map").hidden) { $("#map").innerHTML = ""; mapReady = false; initMap(); }
       if (!$("#tab-evidence").hidden) renderEvidence();
+      if (!$("#tab-today").hidden) renderTrend();
     }, 250);
   });
 
