@@ -285,7 +285,7 @@ def main(skip_live=False, skip_osm=False, osm_cached=False):
         "history": {"week": [str(w.date()) for w in nat_week.week], "cases": [int(v) for v in nat_week.cases],
                     "month2024": [int(v) for v in nat_month.cases],
                     "year_avg": {str(y): [t, round(t / 52.0)] for y, t in ingest_static.opendengue_annual().items()},
-                    "who": {"end": [str(w.date()) for w in who_weeks.week_end], "cases": [int(v) for v in who_weeks.cases]},
+                    "who": {"end": [str(w.date()) for w in who_weeks.week_end], "cases": [int(v) for v in who_weeks.cases], "kind": list(who_weeks.kind)},
                     "region_month": {r: {"start": str(g.month.min().date())[:7], "inc": [_r(v, 1) for v in g.inc]} for r, g in pm.groupby("region")}},
         "feed": {"date": list(natf.date), "daily": [int(v) for v in natf.daily_cases], "cum": [int(v) for v in natf.cumulative_cases]},
     }

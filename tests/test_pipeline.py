@@ -112,3 +112,15 @@ def test_who_update_text_gives_two_weeks_for_malaysia():
     old = "Malaysia There was no update in this reporting period. In epidemiological week 49 (30 November to 6 December 2025), 974 new dengue cases, were reported in Malaysia, an increase from 822 cases in week 48 (Figure 5). Singapore"
     assert W.parse_text(old, dt.date(2026, 2, 5))[0]["cases"] == 974
     assert W.parse_text("Singapore only", dt.date(2025, 3, 6)) == []
+
+
+def test_weekly_backfill_prefers_exact_numbers_over_chart_readings(tmp_path, monkeypatch):
+    import pandas as pd
+    from pipeline import ingest_who as W
+    chart, text, manual = tmp_path / "c.csv", tmp_path / "t.csv", tmp_path / "m.csv"
+    pd.DataFrame({"week_end": ["2025-05-03", "2025-05-10"], "cases": [1179, 1100], "source": "chart"}).to_csv(chart, index=False)
+    pd.DataFrame({"week_end": ["2025-05-03"], "cases": [1205], "source": "WHO"}).to_csv(text, index=False)
+    pd.DataFrame({"week_end": ["2025-05-10"], "cases": [1111], "source": "KKM"}).to_csv(manual, index=False)
+    monkeypatch.setattr(W, "CHART", chart); monkeypatch.setattr(W, "WEEKLY", text); monkeypatch.setattr(W, "MANUAL", manual)
+    w = W.load()
+    assert list(w.cases) == [1205, 1111] and list(w.kind) == ["text", "manual"]

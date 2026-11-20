@@ -510,7 +510,11 @@
     if (o.extra) o.extra(s, x, y);
     const hair = s.append("line").attr("class", "axis").attr("y1", m.t).attr("y2", Hc - m.b).attr("display", "none");
     s.append("rect").attr("x", m.l).attr("y", m.t).attr("width", Wc - m.l - m.r).attr("height", Hc - m.t - m.b).attr("fill", "transparent")
-      .on("mousemove", (ev) => { const px = d3.pointer(ev)[0], xs = series[0].pts.map((p) => p[0]), i = d3.leastIndex(xs, (a) => Math.abs(x(a) - px)); hair.attr("display", null).attr("x1", x(xs[i])).attr("x2", x(xs[i])); showTip(o.tip(i), ev); })
+      .on("mousemove", (ev) => {
+        const px = d3.pointer(ev)[0];
+        if (o.points) { const p = o.points[d3.leastIndex(o.points, (q) => Math.abs(x(q.d) - px))]; hair.attr("display", null).attr("x1", x(p.d)).attr("x2", x(p.d)); showTip(p.tip(), ev); return; }
+        const xs = series[0].pts.map((p) => p[0]), i = d3.leastIndex(xs, (a) => Math.abs(x(a) - px)); hair.attr("display", null).attr("x1", x(xs[i])).attr("x2", x(xs[i])); showTip(o.tip(i), ev);
+      })
       .on("mouseleave", () => { hair.attr("display", "none"); hideTip(); });
   }
   /* ================= CASE TREND (Today) ================= */
@@ -543,31 +547,34 @@
       $("#tr-note").textContent = t("tr.now.note", dfmt(F.date[0]), F.date.length);
       return;
     }
-    // since 2011: weekly reported cases, the forecast made two weeks earlier, the 2024 months and today's rate
+    // since 2011: OpenDengue weekly cases and the forecast made two weeks earlier (to 2022); then weeks from WHO reports and charts
+    // (2023 onward, approximate), weeks built from our own saved iDengue daily reports, and the latest 7 days x 7
     const Hh = D.history, B = M.backtest_week, pm = new Map(B.week.map((w, i) => [w, B.pred[i]])), tt = Hh.week.map((w) => new Date(w));
     const act = tt.map((d, i) => [d, Hh.cases[i]]), pr = tt.map((d, i) => [d, pm.has(Hh.week[i]) ? pm.get(Hh.week[i]) : null]);
-    const mo = Hh.month2024.map((v, i) => { const a = new Date(2024, i, 1), b = new Date(2024, i + 1, 1); return [new Date(+a + (+b - +a) / 2), (v / ((+b - +a) / day)) * 7]; });
+    const who = Hh.who ? Hh.who.end.map((e, i) => [new Date(e + "T00:00:00"), Hh.who.cases[i], e, Hh.who.kind ? Hh.who.kind[i] : "text"]) : [];
+    const idm = new Map();      // iDengue: whole Sunday-to-Saturday weeks only, so a week that is still filling does not look like a drop
+    F.date.forEach((ds, i) => { const d = new Date(ds + "T00:00:00"), e = d3.timeFormat("%Y-%m-%d")(d3.timeDay.offset(d, 6 - d.getDay())), o = idm.get(e) || { n: 0, c: 0 }; o.n++; o.c += F.daily[i]; idm.set(e, o); });
+    const idw = [...idm].filter(([, o]) => o.n === 7).map(([e, o]) => [new Date(e + "T00:00:00"), o.c, e]);
     const k = Math.min(7, F.daily.length), nowV = (d3.sum(F.daily.slice(-k)) / k) * 7, nowD = new Date(F.date[F.date.length - 1] + "T00:00:00");
     const end = new Date(nowD.getFullYear(), 11, 31), yrs = d3.range(2012, nowD.getFullYear() + 1, 2).map((yy) => new Date(yy, 0, 1));
-    const who = (Hh.who ? Hh.who.end.map((e, i) => [new Date(e + "T00:00:00"), Hh.who.cases[i], e]) : []), ya = Object.entries(Hh.year_avg || {}).map(([y, v]) => [+y, v[0], v[1]]);
-    const ymax = Math.max(d3.max(Hh.cases), d3.max(mo, (p) => p[1]), d3.max(who, (p) => p[1]) || 0, d3.max(ya, (p) => p[2]) || 0, nowV) * 1.08, r2 = nw.find((r) => r.horizon === 2 && r.spec === B.spec), HH = 320;
-    lineChart(el, [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: HH, right: 22, x: d3.scaleTime().domain([tt[0], end]), y: d3.scaleLinear().domain([0, ymax]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v),
-      tip: (i) => `<b>${t("ev.bt.week", dfmt(Hh.week[i]))}</b><br>${t("ev.bt.rep", fmt(Hh.cases[i]))}` + (pr[i][1] != null ? `<br>${t("ev.bt.fc", fmt(pr[i][1]))}` : ""),
+    const ymax = Math.max(d3.max(Hh.cases), d3.max(who, (p) => p[1]) || 0, d3.max(idw, (p) => p[1]) || 0, nowV) * 1.08, r2 = nw.find((r) => r.horizon === 2 && r.spec === B.spec), HH = 320;
+    // everything the pointer can land on, so the tooltip follows the nearest point instead of sticking to the last OpenDengue week
+    const pts = [].concat(
+      tt.map((d, i) => ({ d, tip: () => `<b>${t("ev.bt.week", dfmt(Hh.week[i]))}</b><br>${t("ev.bt.rep", fmt(Hh.cases[i]))}` + (pr[i][1] != null ? `<br>${t("ev.bt.fc", fmt(pr[i][1]))}` : "") })),
+      who.map(([d, v, e, kind]) => ({ d, tip: () => `<b>${t("ev.bt.week", dfmt(e))}</b><br>${t(kind === "chart" ? "tr.all.ctip" : kind === "manual" ? "tr.all.mntip" : "tr.all.wtip", fmt(v))}` })),
+      idw.map(([d, v, e]) => ({ d, tip: () => `<b>${t("ev.bt.week", dfmt(e))}</b><br>${t("tr.all.itip", fmt(v))}` })),
+      [{ d: nowD, tip: () => `<b>${dfmt(F.date[F.date.length - 1])}</b><br>${t("tr.all.ntip", k, fmt(Math.round(nowV)))}` }]);
+    lineChart(el, [{ c: "--s1", pts: act }, { c: "--s2", pts: pr }], { h: HH, right: 22, x: d3.scaleTime().domain([tt[0], end]), y: d3.scaleLinear().domain([0, ymax]).nice(), xt: yrs, xf: (d) => d.getFullYear(), yf: (v) => fmt(v), points: pts,
       extra: (s, x, y) => {
         const gx0 = x(tt[tt.length - 1]), gx1 = x(nowD);
         s.append("rect").attr("x", gx0).attr("y", 12).attr("width", gx1 - gx0).attr("height", HH - 12 - 26).attr("fill", "var(--muted)").attr("opacity", 0.08);
         s.append("text").attr("x", gx1 - 6).attr("y", 26).attr("text-anchor", "end").attr("fill", "var(--muted)").text(t("tr.all.gap"));
-        ya.filter(([yy]) => yy < 2024).forEach(([yy, tot, avg]) => s.append("line").attr("x1", x(new Date(yy, 0, 1))).attr("x2", x(new Date(yy, 11, 31))).attr("y1", y(avg)).attr("y2", y(avg)).attr("stroke", "var(--s3)").attr("stroke-width", 2).attr("stroke-dasharray", "5 4")
-          .on("mousemove", (ev) => showTip(`<b>${yy}</b><br>${t("tr.all.ytip", fmt(tot), fmt(avg))}`, ev)).on("mouseleave", hideTip));
-        s.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(mo)).attr("fill", "none").attr("stroke", "var(--s3)").attr("stroke-width", 2);
-        who.forEach(([d, v, e]) => s.append("circle").attr("cx", x(d)).attr("cy", y(v)).attr("r", 3.6).attr("fill", "var(--surface)").attr("stroke", "var(--s1)").attr("stroke-width", 2)
-          .on("mousemove", (ev) => showTip(`<b>${t("ev.bt.week", dfmt(e))}</b><br>${t("tr.all.wtip", fmt(v))}`, ev)).on("mouseleave", hideTip));
-        mo.forEach((p, i) => s.append("circle").attr("cx", x(p[0])).attr("cy", y(p[1])).attr("r", 3.5).attr("fill", "var(--s3)").attr("stroke", "var(--surface)").attr("stroke-width", 1.5)
-          .on("mousemove", (ev) => showTip(`<b>${new Date(2024, i, 1).toLocaleDateString(locale(), { month: "long", year: "numeric" })}</b><br>${t("tr.all.mtip", fmt(Hh.month2024[i]), fmt(Math.round(p[1])))}`, ev)).on("mouseleave", hideTip));
-        s.append("circle").attr("cx", x(nowD)).attr("cy", y(nowV)).attr("r", 5.5).attr("fill", "var(--critical)").attr("stroke", "var(--surface)").attr("stroke-width", 2)
-          .on("mousemove", (ev) => showTip(`<b>${dfmt(F.date[F.date.length - 1])}</b><br>${t("tr.all.ntip", k, fmt(Math.round(nowV)))}`, ev)).on("mouseleave", hideTip);
+        s.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(who)).attr("fill", "none").attr("stroke", "var(--s1)").attr("stroke-width", 1.8).attr("stroke-dasharray", "4 3").attr("stroke-linejoin", "round");
+        who.filter((p) => p[3] !== "chart").forEach(([d, v]) => s.append("circle").attr("cx", x(d)).attr("cy", y(v)).attr("r", 3).attr("fill", "var(--surface)").attr("stroke", "var(--s1)").attr("stroke-width", 2));
+        idw.forEach(([d, v]) => s.append("circle").attr("cx", x(d)).attr("cy", y(v)).attr("r", 4.5).attr("fill", "var(--critical)").attr("stroke", "var(--surface)").attr("stroke-width", 2));
+        s.append("circle").attr("cx", x(nowD)).attr("cy", y(nowV)).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--critical)").attr("stroke-width", 2.5);
       } });
-    $("#tr-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("ev.bt.l1")}</span><span><i style="background:var(--s2)"></i>${t("ev.bt.l2", specName(B.spec).toLowerCase())}</span><span><i style="background:var(--surface);border:2px solid var(--s1);border-radius:50%;width:9px;height:9px"></i>${t("tr.all.lw")}</span><span><i style="background:var(--s3)"></i>${t("tr.all.l3")}</span><span><i style="background:var(--critical)"></i>${t("tr.all.l4")}</span><span class="muted">${t("ev.bt.miss", fmt(Math.round(r2.mae)), r2.n)}</span>`;
+    $("#tr-lg").innerHTML = `<span><i style="background:var(--s1)"></i>${t("ev.bt.l1")}</span><span><i style="background:var(--s2)"></i>${t("ev.bt.l2", specName(B.spec).toLowerCase())}</span><span><i style="background:repeating-linear-gradient(90deg,var(--s1) 0 4px,transparent 4px 7px)"></i>${t("tr.all.lw")}</span><span><i style="background:var(--critical);border-radius:50%;width:9px;height:9px"></i>${t("tr.all.l4")}</span><span class="muted">${t("ev.bt.miss", fmt(Math.round(r2.mae)), r2.n)}</span>`;
     $("#tr-note").textContent = t("tr.all.note");
   }
   function renderEvidence() {

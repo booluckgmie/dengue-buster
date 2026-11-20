@@ -8,6 +8,7 @@ patchy series of weekly points, not a complete one. It is a backfill for the tre
 
 Run:  python -m pipeline.ingest_who          (adds issues published since the last run)
       python -m pipeline.ingest_who --all    (re-reads every issue from 2025-01-09)
+The weekly values for 2023 to mid-2026 that WHO does not print in words come from digitise_who.py (approximate, read off WHO charts).
 Drop extra rows (for example, from a KKM "Situasi Semasa Demam Denggi" statement) into
 data/reference/malaysia_weekly_manual.csv with the columns week_end,cases,source; they win over WHO rows for the same week.
 """
@@ -92,6 +93,12 @@ def pdf_text(raw: bytes) -> str:
     return "\n".join((p.extract_text() or "") for p in r.pages[:6])
 
 
+def pdf_images(raw: bytes, page: int) -> dict[str, bytes]:
+    """Images embedded on one page (1-based) of a PDF, by name."""
+    from pypdf import PdfReader
+    return {im.name: im.data for im in PdfReader(io.BytesIO(raw)).pages[page - 1].images}
+
+
 def _fetch(url: str) -> bytes | None:
     try:
         r = requests.get(url, headers=HEADERS, timeout=60)
@@ -144,12 +151,20 @@ def refresh(everything: bool = False, today: dt.date | None = None) -> pd.DataFr
     return out
 
 
+CHART = REF / "malaysia_weekly_chart.csv"      # approximate weekly values read off WHO charts (see digitise_who.py)
+
+
 def load() -> pd.DataFrame:
-    """WHO weeks plus any manual rows (manual wins), sorted, with week_end as a date."""
-    w = pd.read_csv(WEEKLY) if WEEKLY.exists() else pd.DataFrame(columns=["week_end", "cases", "source"])
-    if MANUAL.exists():
-        m = pd.read_csv(MANUAL)
-        w = pd.concat([w, m], ignore_index=True).drop_duplicates("week_end", keep="last")
+    """One row per week after 2022. Precedence for a week: manual rows, then numbers WHO prints in words, then values read off charts.
+    `kind` is 'text', 'chart' or 'manual'."""
+    parts = []
+    for path, kind in ((CHART, "chart"), (WEEKLY, "text"), (MANUAL, "manual")):      # later parts win
+        if path.exists():
+            d = pd.read_csv(path)[["week_end", "cases", "source"]]
+            d["kind"] = kind
+            parts.append(d)
+    w = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=["week_end", "cases", "source", "kind"])
+    w = w.drop_duplicates("week_end", keep="last")
     w["week_end"] = pd.to_datetime(w.week_end)
     return w.sort_values("week_end").reset_index(drop=True)
 
