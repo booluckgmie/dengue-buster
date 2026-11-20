@@ -570,6 +570,11 @@
         s.append("rect").attr("x", gx0).attr("y", 12).attr("width", gx1 - gx0).attr("height", HH - 12 - 26).attr("fill", "var(--muted)").attr("opacity", 0.08);
         s.append("text").attr("x", gx1 - 6).attr("y", 26).attr("text-anchor", "end").attr("fill", "var(--muted)").text(t("tr.all.gap"));
         s.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(who)).attr("fill", "none").attr("stroke", "var(--s1)").attr("stroke-width", 1.8).attr("stroke-dasharray", "4 3").attr("stroke-linejoin", "round");
+        // join the last WHO week to the first iDengue point, and the iDengue points to each other; the join is only a visual link
+        // (no weekly figures exist for the weeks in between), so it is drawn lighter and dotted
+        const iser = idw.concat([[nowD, nowV]]), lastWho = who[who.length - 1];
+        if (lastWho && iser[0][0] > lastWho[0]) s.append("line").attr("x1", x(lastWho[0])).attr("y1", y(lastWho[1])).attr("x2", x(iser[0][0])).attr("y2", y(iser[0][1])).attr("stroke", "var(--muted)").attr("stroke-width", 1.8).attr("stroke-dasharray", "1.5 4").attr("stroke-linecap", "round");
+        if (iser.length > 1) s.append("path").attr("d", d3.line().x((p) => x(p[0])).y((p) => y(p[1]))(iser)).attr("fill", "none").attr("stroke", "var(--critical)").attr("stroke-width", 1.8).attr("stroke-dasharray", "4 3");
         who.filter((p) => p[3] !== "chart").forEach(([d, v]) => s.append("circle").attr("cx", x(d)).attr("cy", y(v)).attr("r", 3).attr("fill", "var(--surface)").attr("stroke", "var(--s1)").attr("stroke-width", 2));
         idw.forEach(([d, v]) => s.append("circle").attr("cx", x(d)).attr("cy", y(v)).attr("r", 4.5).attr("fill", "var(--critical)").attr("stroke", "var(--surface)").attr("stroke-width", 2));
         s.append("circle").attr("cx", x(nowD)).attr("cy", y(nowV)).attr("r", 5).attr("fill", "var(--surface)").attr("stroke", "var(--critical)").attr("stroke-width", 2.5);
